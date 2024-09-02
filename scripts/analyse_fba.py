@@ -1,7 +1,259 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri May 24 12:51:54 2024
+Created on Fri May 24 12:51:24 2024
 
 @author: b1095820
 """
 
+# %% Set-up: Import necessary libraries and functions
+# Standard libraries
+# os -  Working with file or folder directories
+import os
+# random - Pick random values between the lower and the upper bound
+import random
+# warnings - Ignore warnings about infeasible solutions
+# import warnings
+# datetime - Display the time it took for the analysis to run
+from datetime import datetime
+# pandas - Work with dataframes
+import pandas as pd
+# numpy - Working with arrays
+import numpy as np
+# Matplotlib - For plotting figures
+import matplotlib.pyplot as plt
+
+# Third-party library imports
+# cobrapy- Run FBA
+import cobra
+
+# Local application/library-specific imports
+# escher plots
+# from escher.plots import Builder
+
+# %% Set directory
+
+os.system("pwd")
+current_wd = os.getcwd()
+os.chdir(current_wd)
+
+# %% load cho model
+
+models = {
+    "iCHO1766": "iCHOv1_final.xml",
+    # "iCHO2441": "iCHO2441.xml",
+    # "CHO-K1": "iCHOv1_K1_final.xml",
+    # "CHOmpact": "CHOsmallmodel.json"
+    # "CHOmpact_small": "CHOsmallmodel_activity4.json"
+    # "K1par-0mMCD": "iCHO_K1par-0mMCD.xml"
+    }
+
+for model_name, model_file in models.items():
+    print(model_name)
+    MODEL_PATH = "cho_gems/" + model_file
+    _, file_extension = os.path.splitext(MODEL_PATH)
+
+    if file_extension == '.xml':
+        model_orig = cobra.io.read_sbml_model(MODEL_PATH)
+    elif file_extension == '.json':
+        model_orig = cobra.io.load_json_model(MODEL_PATH)
+    else:
+        # Handle unsupported file types or other extensions
+        print(f"Unsupported file extension: {file_extension}")
+        continue
+    print(f"Loaded {model_name} model successfully!")
+
+# %% update igg production reaction equations
+model = model_orig.copy()
+
+
+# hc equations
+print("Original reaction in the model:", model.reactions.igg_hc.reaction)
+
+igg_hc_new_equation = '20.0 ala_L_c + 11.0 arg_L_c + 19.0 asn_L_c + 21.0 asp_L_c + 460.0 atp_c + 11.0 cys_L_c + 16.0 gln_L_c + 20.0 glu_L_c + 25.0 gly_c + 916.0 gtp_c + 917.0 h2o_c + 10.0 his_L_c + 9.0 ile_L_c + 35.0 leu_L_c + 35.0 lys_L_c + 6.0 met_L_c + 15.0 phe_L_c + 37.0 pro_L_c + 49.0 ser_L_c + 41.0 thr_L_c + 10.0 trp_L_c + 16.0 tyr_L_c + 44.0 val_L_c --> adp_c + 459.0 amp_c + 916.0 gdp_c + 917.0 h_c + igg_hc_r + 917.0 pi_c + 459.0 ppi_c'  # Replace with the new equation you want to set
+
+# Access the existing reaction in the model
+existing_reaction = model.reactions.get_by_id('igg_hc')
+# Update the reaction equation
+existing_reaction.reaction = igg_hc_new_equation
+
+print("Updated reaction in the model:", model.reactions.igg_hc.reaction)
+
+
+#lc equations
+print("Original reaction in the model:", model.reactions.igg_lc.reaction)
+
+igg_lc_new_equation = '12.0 ala_L_c + 6.0 arg_L_c + 5.0 asn_L_c + 10.0 asp_L_c + 217.0 atp_c + 5.0 cys_L_c + 12.0 gln_L_c + 9.0 glu_L_c + 16.0 gly_c + 430.0 gtp_c + 431.0 h2o_c + 3.0 his_L_c + 6.0 ile_L_c + 14.0 leu_L_c + 14.0 lys_L_c + 2.0 met_L_c + 10.0 phe_L_c + 1.0 pro_L_c + 32.0 ser_L_c + 19.0 thr_L_c + 2.0 trp_L_c + 10.0 tyr_L_c + 15.0 val_L_c --> adp_c + 216.0 amp_c + 430.0 gdp_c + 431.0 h_c + igg_lc_r + 431.0 pi_c + 216.0 ppi_c'  # Replace with the new equation you want to set
+
+# Access the existing reaction in the model
+existing_reaction = model.reactions.get_by_id('igg_lc')
+# Update the reaction equation
+existing_reaction.reaction = igg_lc_new_equation
+
+print("Updated reaction in the model:", model.reactions.igg_lc.reaction)
+# %% load aa and metabolite data
+rates = pd.read_csv("data/aa_rates_reordered_nottshifted_metabolites.csv")
+
+# %% check all names of reactions for which you want to set the bounds
+
+uptake_names = {
+    "Ala": "EX_ala_L_e_",
+    "Ammonia": "EX_nh4_e_",
+    "Arg": "EX_arg_L_e_",
+    "Asn": "EX_asn_L_e_",
+    "Asp": "EX_asp_L_e_",
+    #"Cysteine": "EX_cys_L_e_",
+    "Glucose": "EX_glc_e_",
+    "Glu": "EX_glu_L_e_",
+    "Gln": "EX_gln_L_e_",
+    "Gly": "EX_gly_e_",
+    "His": "EX_his_L_e_",
+    "Ile": "EX_ile_L_e_",
+    "Lactate": "EX_lac_L_e_",
+    "Leu": "EX_leu_L_e_",
+    "Lys": "EX_lys_L_e_",
+    "Met": "EX_met_L_e_",
+    "Phe": "EX_phe_L_e_",
+    "Pro": "EX_pro_L_e_",
+    "Ser": "EX_ser_L_e_",
+    "Thr": "EX_thr_L_e_",
+    "Trp": "EX_trp_L_e_",
+    "Tyr": "EX_tyr_L_e_",
+    "Val": "EX_val_L_e_"
+}
+
+taken_up = [
+    "EX_gln_L_e_",
+    "EX_cys_L_e_",
+    "EX_arg_L_e_",
+    "EX_asn_L_e_",
+    "EX_asp_L_e_",
+    "EX_glc_e_",
+    "EX_glu_L_e_",
+    "EX_h_e_",
+    "EX_h2o_e_",
+    "EX_his_L_e_",
+    "EX_ile_L_e_",
+    "EX_leu_L_e_",
+    "EX_lys_L_e_",
+    "EX_met_L_e_",
+    "EX_o2_e_",
+    "EX_phe_L_e_",
+    "EX_pi_e_",
+    "EX_pro_L_e_",
+    "EX_ser_L_e_",
+    "EX_thr_L_e_",
+    "EX_trp_L_e_",
+    "EX_tyr_L_e_",
+    "EX_val_L_e_",
+    "EX_lnlc_e_",
+    "EX_lnlnca_e_",
+    "EX_Tyr_ggn_e_"
+]
+for ex in model.reactions:
+    if ex.reversibility or ex.id in taken_up:
+        print(ex.bounds)
+
+# Turn off igg and epo production
+model.reactions.DM_igg_g_.lower_bound = -1
+model.reactions.DM_igg_g_.upper_bound = 1
+model.reactions.DM_epo_g_.lower_bound = 0
+model.reactions.DM_epo_g_.upper_bound = 0
+
+
+# Set the objective function
+#if strain in producers:
+model.objective = "biomass_cho_producing" #index 6618
+model.reactions.biomass_cho.upper_bound = 0
+model.reactions.biomass_cho.lower_bound = 0
+#else:
+# model.objective = "biomass_cho" #index 6627
+# model.reactions.biomass_cho_producing.upper_bound = 0
+# model.reactions.biomass_cho_producing.lower_bound = 0
+
+
+
+# %%
+startTime = datetime.now()
+N = 100
+
+mus = {}
+sets = set(rates.window)
+
+for s in sets:
+    mus[s] = np.zeros(N)
+
+
+for s in sets:
+    # reset default bounds on all reactions
+    for ex in model.reactions:
+        ex.upper_bound = 1000
+        if ex.reversibility or ex.id in taken_up:
+            ex.lower_bound = -1000
+        else:
+            ex.lower_bound = 0
+    # uptake and secretion rates for one strain
+    print(s)
+    one_set = rates[rates.window == s]
+    
+    n = 0
+    while n < N:
+        print(n)
+        with model:
+            for idx, row in one_set.iterrows():
+                uptake = row.amino_acid
+                qp = row.qp
+                err = row.se
+                ID = uptake_names[uptake]#[2:-1]
+                r = model.reactions.get_by_id(ID)
+                
+                # sample LB and UB
+                picked1 = random.uniform(qp - err, qp + err)
+                picked2 = random.uniform(qp - err, qp + err)
+                # picked1 = qp + err
+                # picked2 = qp - err
+                picked = sorted([picked1, picked2])
+                # Set bounds
+                r.bounds = (picked[0], picked[1])
+                print(r.bounds)
+                
+            FBA = model.optimize()
+    
+            mus[s][n] = FBA.objective_value
+            n += 1
+            print(FBA.status)
+
+# Print how long the script ran
+print(datetime.now() - startTime)
+
+# %%
+
+# Calculate mean and standard deviation of mus for each phase
+mean_mus = {}
+std_mus = {}
+for window, value in mus.items():
+    mean_mu = np.mean(value)
+    std_mu = np.std(value)
+    mean_mus[window] = mean_mu
+    std_mus[window] = std_mu
+
+# Convert dictionaries to DataFrame
+df = pd.DataFrame({
+    'Window': mean_mus.keys(),
+    'Mean': mean_mus.values(),
+    'Std': std_mus.values()
+})
+
+# Sort the DataFrame by the 'Window' column
+df = df.sort_values(by='Window')
+
+# Plot the bar plot with error bars
+plt.figure(figsize=(10, 6))
+plt.bar(df['Window'], df['Mean'], yerr=df['Std'], capsize=5, color='green', ecolor='black')
+plt.xlabel('Window')
+plt.ylabel('Mean $mu$')
+plt.title('Mean $mu$ for Each Window with Standard Deviation')
+plt.xticks(rotation=45)
+plt.tight_layout()
+
+# Show the plot
+plt.show()
