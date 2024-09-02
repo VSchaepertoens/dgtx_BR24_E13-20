@@ -114,29 +114,29 @@ uptake_names = {
 }
 
 uptake_names = {
-    "Alanine": "EX_ala_L_e_",
+    "Ala": "EX_ala_L_e_",
     #"Ammonia": "EX_nh4_e_",
-    "Arginine": "EX_arg_L_e_",
-    "Asparagine": "EX_asn_L_e_",
-    "Aspartic_acid": "EX_asp_L_e_",
+    "Arg": "EX_arg_L_e_",
+    "Asn": "EX_asn_L_e_",
+    "Asp": "EX_asp_L_e_",
     #"Cysteine": "EX_cys_L_e_",
     #"Glucose": "EX_glc_e_",
-    "Glutamic_acid": "EX_glu_L_e_",
-    "Glutamine": "EX_gln_L_e_",
-    "Glycine": "EX_gly_L_e_",
-    "Histidine": "EX_his_L_e_",
-    "Isoleucine": "EX_ile_L_e_",
+    "Glu": "EX_glu_L_e_",
+    "Gln": "EX_gln_L_e_",
+    "Gly": "EX_gly_L_e_",
+    "His": "EX_his_L_e_",
+    "Ile": "EX_ile_L_e_",
     #"Lactate": "EX_lac_L_e_",
-    "Leucine": "EX_leu_L_e_",
-    "Lysine": "EX_lys_L_e_",
-    "Methionine": "EX_met_L_e_",
-    "Phenylalanine": "EX_phe_L_e_",
-    "Proline": "EX_pro_L_e_",
-    "Serine": "EX_ser_L_e_",
-    "Threonine": "EX_thr_L_e_",
-    "Tryptophan": "EX_trp_L_e_",
-    "Tyrosine": "EX_tyr_L_e_",
-    "Valine": "EX_val_L_e_"
+    "Leu": "EX_leu_L_e_",
+    "Lys": "EX_lys_L_e_",
+    "Met": "EX_met_L_e_",
+    "Phe": "EX_phe_L_e_",
+    "Pro": "EX_pro_L_e_",
+    "Ser": "EX_ser_L_e_",
+    "Thr": "EX_thr_L_e_",
+    "Trp": "EX_trp_L_e_",
+    "Tyr": "EX_tyr_L_e_",
+    "Val": "EX_val_L_e_"
 }
 
 # Turn off igg and epo production
