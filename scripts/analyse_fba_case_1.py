@@ -70,32 +70,33 @@ model = model_orig.copy()
 
 # %% update igg production reaction equations
 # hc equations
-print("Original reaction in the model:", model.reactions.igg_hc.reaction)
+# print("Original reaction in the model:", model.reactions.igg_hc.reaction)
 
-igg_hc_new_equation = '20.0 ala_L_c + 11.0 arg_L_c + 19.0 asn_L_c + 21.0 asp_L_c + 460.0 atp_c + 11.0 cys_L_c + 16.0 gln_L_c + 20.0 glu_L_c + 25.0 gly_c + 916.0 gtp_c + 917.0 h2o_c + 10.0 his_L_c + 9.0 ile_L_c + 35.0 leu_L_c + 35.0 lys_L_c + 6.0 met_L_c + 15.0 phe_L_c + 37.0 pro_L_c + 49.0 ser_L_c + 41.0 thr_L_c + 10.0 trp_L_c + 16.0 tyr_L_c + 44.0 val_L_c --> adp_c + 459.0 amp_c + 916.0 gdp_c + 917.0 h_c + igg_hc_r + 917.0 pi_c + 459.0 ppi_c'  # Replace with the new equation you want to set
+# igg_hc_new_equation = '20.0 ala_L_c + 11.0 arg_L_c + 19.0 asn_L_c + 21.0 asp_L_c + 460.0 atp_c + 11.0 cys_L_c + 16.0 gln_L_c + 20.0 glu_L_c + 25.0 gly_c + 916.0 gtp_c + 917.0 h2o_c + 10.0 his_L_c + 9.0 ile_L_c + 35.0 leu_L_c + 35.0 lys_L_c + 6.0 met_L_c + 15.0 phe_L_c + 37.0 pro_L_c + 49.0 ser_L_c + 41.0 thr_L_c + 10.0 trp_L_c + 16.0 tyr_L_c + 44.0 val_L_c --> adp_c + 459.0 amp_c + 916.0 gdp_c + 917.0 h_c + igg_hc_r + 917.0 pi_c + 459.0 ppi_c'  # Replace with the new equation you want to set
 
-# Access the existing reaction in the model
-existing_reaction = model.reactions.get_by_id('igg_hc')
-# Update the reaction equation
-existing_reaction.reaction = igg_hc_new_equation
+# # Access the existing reaction in the model
+# existing_reaction = model.reactions.get_by_id('igg_hc')
+# # Update the reaction equation
+# existing_reaction.reaction = igg_hc_new_equation
 
-print("Updated reaction in the model:", model.reactions.igg_hc.reaction)
+# print("Updated reaction in the model:", model.reactions.igg_hc.reaction)
 
 
-#lc equations
-print("Original reaction in the model:", model.reactions.igg_lc.reaction)
+# #lc equations
+# print("Original reaction in the model:", model.reactions.igg_lc.reaction)
 
-igg_lc_new_equation = '12.0 ala_L_c + 6.0 arg_L_c + 5.0 asn_L_c + 10.0 asp_L_c + 217.0 atp_c + 5.0 cys_L_c + 12.0 gln_L_c + 9.0 glu_L_c + 16.0 gly_c + 430.0 gtp_c + 431.0 h2o_c + 3.0 his_L_c + 6.0 ile_L_c + 14.0 leu_L_c + 14.0 lys_L_c + 2.0 met_L_c + 10.0 phe_L_c + 1.0 pro_L_c + 32.0 ser_L_c + 19.0 thr_L_c + 2.0 trp_L_c + 10.0 tyr_L_c + 15.0 val_L_c --> adp_c + 216.0 amp_c + 430.0 gdp_c + 431.0 h_c + igg_lc_r + 431.0 pi_c + 216.0 ppi_c'  # Replace with the new equation you want to set
+# igg_lc_new_equation = '12.0 ala_L_c + 6.0 arg_L_c + 5.0 asn_L_c + 10.0 asp_L_c + 217.0 atp_c + 5.0 cys_L_c + 12.0 gln_L_c + 9.0 glu_L_c + 16.0 gly_c + 430.0 gtp_c + 431.0 h2o_c + 3.0 his_L_c + 6.0 ile_L_c + 14.0 leu_L_c + 14.0 lys_L_c + 2.0 met_L_c + 10.0 phe_L_c + 1.0 pro_L_c + 32.0 ser_L_c + 19.0 thr_L_c + 2.0 trp_L_c + 10.0 tyr_L_c + 15.0 val_L_c --> adp_c + 216.0 amp_c + 430.0 gdp_c + 431.0 h_c + igg_lc_r + 431.0 pi_c + 216.0 ppi_c'  # Replace with the new equation you want to set
 
-# Access the existing reaction in the model
-existing_reaction = model.reactions.get_by_id('igg_lc')
-# Update the reaction equation
-existing_reaction.reaction = igg_lc_new_equation
+# # Access the existing reaction in the model
+# existing_reaction = model.reactions.get_by_id('igg_lc')
+# # Update the reaction equation
+# existing_reaction.reaction = igg_lc_new_equation
 
-print("Updated reaction in the model:", model.reactions.igg_lc.reaction)
+# print("Updated reaction in the model:", model.reactions.igg_lc.reaction)
 # %% load aa and metabolite data
 #rates = pd.read_csv("data/aa_rates_reordered_nottshifted_metabolites.csv")
-rates = pd.read_csv("data/aa_rates_reordered_data2_nottshifted.csv")
+# rates = pd.read_csv("data/aa_rates_reordered_data2_nottshifted.csv")
+rates = pd.read_csv("data/aa_rates_reordered_data2_tshifted.csv")
 
 # Define the specific values to be removed
 values_to_remove = ['Growth_rate', 'Titer']  # Replace these with the actual values you want to remove
@@ -186,61 +187,61 @@ model.reactions.biomass_cho_producing.lower_bound = 0
 
 
 # %%
-startTime = datetime.now()
-N = 1
+# startTime = datetime.now()
+# N = 10
 
-mus = {}
-sets = set(rates.Window)
+# mus = {}
+# sets = set(rates.Window)
 
-for s in sets:
-    mus[s] = np.zeros(N)
+# for s in sets:
+#     mus[s] = np.zeros(N)
 
 
-for s in sets:
-    # reset default bounds on all reactions
-    for ex in model.reactions:
-        ex.upper_bound = 1000
-        if ex.reversibility or ex.id in taken_up:
-            ex.lower_bound = -1000
-        else:
-            ex.lower_bound = 0
-    # uptake and secretion rates for one strain
-    print(s)
-    one_set = rates[rates.Window == s]
+# for s in sets:
+#     # reset default bounds on all reactions
+#     for ex in model.reactions:
+#         ex.upper_bound = 1000
+#         if ex.reversibility or ex.id in taken_up:
+#             ex.lower_bound = -1000
+#         else:
+#             ex.lower_bound = 0
+#     # uptake and secretion rates for one strain
+#     print(s)
+#     one_set = rates[rates.Window == s]
     
-    n = 0
-    while n < N:
-        print(n)
-        with model:
-            for idx, row in one_set.iterrows():
-                uptake = row.AA_meta
-                qp = row.Rate
-                err = row.SD
-                ID = uptake_names[uptake]#[2:-1]
-                r = model.reactions.get_by_id(ID)
+#     n = 0
+#     while n < N:
+#         print(n)
+#         with model:
+#             for idx, row in one_set.iterrows():
+#                 uptake = row.AA_meta
+#                 qp = row.Rate
+#                 err = row.SD
+#                 ID = uptake_names[uptake]#[2:-1]
+#                 r = model.reactions.get_by_id(ID)
                 
-                # sample LB and UB
-                picked1 = random.uniform(qp - err, qp + err)
-                picked2 = random.uniform(qp - err, qp + err)
-                # picked1 = qp + err
-                # picked2 = qp - err
-                picked = sorted([picked1, picked2])
-                # Set bounds
-                r.bounds = (picked[0], picked[1])
-                print(r.bounds)
+#                 # sample LB and UB
+#                 picked1 = random.uniform(qp - err, qp + err)
+#                 picked2 = random.uniform(qp - err, qp + err)
+#                 # picked1 = qp + err
+#                 # picked2 = qp - err
+#                 picked = sorted([picked1, picked2])
+#                 # Set bounds
+#                 r.bounds = (picked[0], picked[1])
+#                 print(r.bounds)
                 
-            FBA = model.optimize()
+#             FBA = model.optimize()
     
-            mus[s][n] = FBA.objective_value
-            n += 1
-            print(FBA.status)
+#             mus[s][n] = FBA.objective_value
+#             n += 1
+#             print(FBA.status)
 
-# Print how long the script ran
-print(datetime.now() - startTime)
+# # Print how long the script ran
+# print(datetime.now() - startTime)
 
 # %%
 startTime = datetime.now()
-N = 1
+N = 10
 
 # Initialize dictionaries
 mus = {}
@@ -332,14 +333,14 @@ for ex in mus:
         print(f"Experiment: {ex}, Window: {w}, mu values: {mus[ex][w]}")
 
 # %%
-# Display reaction data (bounds and fluxes) in the command line
-print("\nReaction Data (LB, UB, and Fluxes):")
-for ex in reaction_data:
-    for w in reaction_data[ex]:
-        for n in range(N):
-            print(f"Experiment: {ex}, Window: {w}, Iteration: {n}")
-            for reaction_id, data in reaction_data[ex][w][n].items():
-                print(f"  Reaction: {reaction_id}, LB: {data['LB']}, UB: {data['UB']}, Flux: {data['flux']}")
+# # Display reaction data (bounds and fluxes) in the command line
+# print("\nReaction Data (LB, UB, and Fluxes):")
+# for ex in reaction_data:
+#     for w in reaction_data[ex]:
+#         for n in range(N):
+#             print(f"Experiment: {ex}, Window: {w}, Iteration: {n}")
+#             for reaction_id, data in reaction_data[ex][w][n].items():
+#                 print(f"  Reaction: {reaction_id}, LB: {data['LB']}, UB: {data['UB']}, Flux: {data['flux']}")
 # %%
 # Convert mus dictionary to a pandas DataFrame
 mus_list = []
@@ -375,42 +376,34 @@ reaction_data_df = pd.DataFrame(reaction_data_list)
 mus_df.to_csv('fba_results/mus_results.csv', index=False)
 reaction_data_df.to_csv('fba_results/reaction_data_results.csv', index=False)
 
-# Display mus in the command line
-print("\nResults (mus):")
-print(mus_df)
-
-# Display reaction data in the command line
-print("\nReaction Data (LB, UB, and Fluxes):")
-print(reaction_data_df)
-
 #%%
-# Calculate mean and standard deviation of mus for each phase
-mean_mus = {}
-std_mus = {}
-for window, value in mus.items():
-    mean_mu = np.mean(value)
-    std_mu = np.std(value)
-    mean_mus[window] = mean_mu
-    std_mus[window] = std_mu
+# # Calculate mean and standard deviation of mus for each phase
+# mean_mus = {}
+# std_mus = {}
+# for window, value in mus.items():
+#     mean_mu = np.mean(value)
+#     std_mu = np.std(value)
+#     mean_mus[window] = mean_mu
+#     std_mus[window] = std_mu
 
-# Convert dictionaries to DataFrame
-df = pd.DataFrame({
-    'Window': mean_mus.keys(),
-    'Mean': mean_mus.values(),
-    'Std': std_mus.values()
-})
+# # Convert dictionaries to DataFrame
+# df = pd.DataFrame({
+#     'Window': mean_mus.keys(),
+#     'Mean': mean_mus.values(),
+#     'Std': std_mus.values()
+# })
 
-# Sort the DataFrame by the 'Window' column
-df = df.sort_values(by='Window')
+# # Sort the DataFrame by the 'Window' column
+# df = df.sort_values(by='Window')
 
-# Plot the bar plot with error bars
-plt.figure(figsize=(10, 6))
-plt.bar(df['Window'], df['Mean'], yerr=df['Std'], capsize=5, color='green', ecolor='black')
-plt.xlabel('Window')
-plt.ylabel('Mean $mu$')
-plt.title('Mean $mu$ for Each Window with Standard Deviation')
-plt.xticks(rotation=45)
-plt.tight_layout()
+# # Plot the bar plot with error bars
+# plt.figure(figsize=(10, 6))
+# plt.bar(df['Window'], df['Mean'], yerr=df['Std'], capsize=5, color='green', ecolor='black')
+# plt.xlabel('Window')
+# plt.ylabel('Mean $mu$')
+# plt.title('Mean $mu$ for Each Window with Standard Deviation')
+# plt.xticks(rotation=45)
+# plt.tight_layout()
 
-# Show the plot
-plt.show()
+# # Show the plot
+# plt.show()
