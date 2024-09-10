@@ -38,7 +38,8 @@ rates_with_growth <- rates %>%
   rename(Rate_mM.gDCW.h = Growth_rate.h, SD_mM.gDCW.h = Growth_rate_SE.h) %>%
   mutate(AA_meta = "Growth_rate") %>%
   bind_rows(rates) %>%
-  select(Experiment, Window, Condition, AA_meta, Rate_mM.gDCW.h, SD_mM.gDCW.h)
+  select(Experiment, Window, Condition, AA_meta, Rate_mM.gDCW.h, SD_mM.gDCW.h) %>%
+  rename(Rate = Rate_mM.gDCW.h, SD = SD_mM.gDCW.h)
 
 unique(rates_with_growth$Experiment)
 unique(rates_with_growth$Condition)
