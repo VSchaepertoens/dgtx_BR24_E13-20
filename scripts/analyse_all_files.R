@@ -26,7 +26,7 @@ library(tidyverse)
 
 # define analysis of pngase F digested or not digested data ---------------
 
-pngase <- "none" # "none"
+pngase <- "pngase" # "none" or "pngase"
 
 # constants ---------------------------------------------------------------
 
@@ -48,12 +48,12 @@ df <- tibble(mzml_full_path = dir_ls(path = "data",regexp =  ".*\\.mzML"),) %>%
                                   gsub("\\..*$", "", filename))) %>%
   filter(grepl(pngase, filename, ignore.case = TRUE)) %>%
   mutate(sample_name = str_extract(filename, "([^_]+_[^_]+_[^_]+_[^_]+_[^_]+_[^_]+)"))
-
+df <- df[1:195,] # for pngase to remove reference nistmab
 fs::dir_create(df$analysis_path)
 
 # load cs and rt data -----------------------------------------------------
 
-cs_rt_data <- read_csv("data/samples_overview.csv") %>%
+cs_rt_data <- read_csv("data/samples_overview_filtered_TB.csv") %>%
   filter(grepl(pngase, sample_name, ignore.case = TRUE)) %>%
   mutate(sample_name = str_extract(sample_name, "([^_]+_[^_]+_[^_]+_[^_]+_[^_]+_[^_]+)"))
 
@@ -119,7 +119,7 @@ calculate_abundance <- function(mzml_full_path,
 
   pfm_ions <-
     assemble_proteoforms(proteins, modcoms) %>%
-    ionize(charge_states = c(42:53), ppm = 300)
+    ionize(charge_states = c(42:53), ppm = 500)
   print(dim(pfm_ions)) #check that for every file the correct # of charge states was used
   
   extracted_filename <- str_extract(ms_data@fileName, "(?<=data\\/).*(?=\\.mzML)")
@@ -174,12 +174,13 @@ calculate_abundance <- function(mzml_full_path,
 
 ## apply custom function to dfr --------------------------------------------
 
-pwalk(data_merged[1:10,], calculate_abundance, .progress = TRUE)
-pwalk(data_merged[17:52,], calculate_abundance, .progress = TRUE)
-pwalk(data_merged[13:16,], calculate_abundance, .progress = TRUE)
-pwalk(data_merged[53:56,], calculate_abundance, .progress = TRUE)
+pwalk(data_merged[87:195,], calculate_abundance, .progress = TRUE)
+pwalk(data_merged[27,], calculate_abundance, .progress = TRUE)
 
-
+start.time <- Sys.time()
 pwalk(data_merged, calculate_abundance, .progress = TRUE)
 
+end.time <- Sys.time()
 
+time.taken <- end.time - start.time
+time.taken

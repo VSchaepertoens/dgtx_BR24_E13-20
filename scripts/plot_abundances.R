@@ -4,7 +4,7 @@ library(tidyverse)
 
 # define analysis of pngase F digested or not digested data ---------------
 
-pngase <- "none" # "none"
+pngase <- "pngase" # "none" or "pngase"
 
 # load an overview table of data & analysis paths -------------------------
 
@@ -67,15 +67,32 @@ abundance_data_averaged <- abundance_data %>%
                     "timepoint"
                     ),
            sep = "_",
-           remove = FALSE)
+           remove = FALSE) %>%
+  mutate(experiment = factor(experiment, levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20"))) %>%
+  # filter(experiment != "E17")
+  {.}
 
 save(abundance_data,
      abundance_data_averaged,
      file = paste0("analysis/abundance_data_",pngase,".RData"))
 
+load("analysis/abundance_data_none.RData")
 # plot char runs data -----------------------------------------------------
+# Define the colors
+color_mapping_experiment <- c(
+  "E13" = "#e41a1c",
+  "E14" = "#377eb8",
+  "E15" = "#4daf4a",
+  "E16" = "#984ea3",
+  "E17" = "#ff7f00",
+  "E18" = "#ffff33",
+  "E19" = "#a65628",
+  "E20" = "#f781bf"
+)
 
-ggplot(abundance_data_averaged, aes(x = modcom_name, y = frac_abundance, fill = experiment)) +
+
+plot_bars <- function(data){
+ggplot(data, aes(x = modcom_name, y = frac_abundance, fill = experiment)) +
   geom_col(
     position = position_dodge(width = 0.9)  
   ) + 
@@ -83,14 +100,129 @@ ggplot(abundance_data_averaged, aes(x = modcom_name, y = frac_abundance, fill = 
     aes(
       ymin = frac_abundance - error,
       ymax = frac_abundance + error,
-      group = experiment_tp
+      group = experiment
     ),
     position = position_dodge(.9),
     width = .5,
     linewidth = .25
   ) +
-  facet_wrap(~ timepoint) +
+  facet_wrap(~ timepoint, ncol = 4) +
+  scale_fill_manual(values = color_mapping_experiment, 
+                    breaks = names(color_mapping_experiment)) +
+    # scale_color_manual(values = color_mapping, 
+    #                    breaks = names(color_mapping)) +
+    # scale_y_continuous(name = "fractional abundance (%)",
+    #                    breaks = y_breaks, 
+    #                    labels = \(x) abs(x), 
+    #                    limits = c(-60,60)) 
   theme(axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1))
+}
+
+plot_bars(abundance_data_averaged)
+
+ggsave(filename = "figures/pngase_frac_ab_barplot_all_experiments.png",
+       height = 100,
+       width = 250,
+       units = "mm",
+       dpi = 600)
+
+constant_data <- abundance_data_averaged %>%
+  filter(experiment %in% c("E13", "E15", "E17", "E19"))
+plot_bars(constant_data)
+
+ggsave(filename = "figures/frac_ab_barplot_constant.png",
+       height = 100,
+       width = 200,
+       units = "mm",
+       dpi = 600)
+
+tshifted_data <- abundance_data_averaged %>%
+  filter(experiment %in% c("E14", "E16", "E18", "E20"))
+plot_bars(tshifted_data)
+
+ggsave(filename = "figures/frac_ab_barplot_tshifted.png",
+       height = 100,
+       width = 200,
+       units = "mm",
+       dpi = 600)
+
+e13e15_data <- abundance_data_averaged %>%
+  filter(experiment %in% c("E13", "E15"))
+plot_bars(e13e15_data)
+
+ggsave(filename = "figures/frac_ab_barplot_e13e15.png",
+       height = 100,
+       width = 200,
+       units = "mm",
+       dpi = 600)
+
+e18e20_data <- abundance_data_averaged %>%
+  filter(experiment %in% c("E18", "E20"))
+plot_bars(e18e20_data)
+
+ggsave(filename = "figures/frac_ab_barplot_e18_e20.png",
+         height = 100,
+         width = 200,
+         units = "mm",
+         dpi = 600)
+
+e15e16_data <- abundance_data_averaged %>%
+  filter(experiment %in% c("E15", "E16"))
+plot_bars(e15e16_data)
+
+ggsave(filename = "figures/frac_ab_barplot_e15_e16.png",
+       height = 100,
+       width = 200,
+       units = "mm",
+       dpi = 600)
+
+e13e14_data <- abundance_data_averaged %>%
+  filter(experiment %in% c("E13", "E14"))
+plot_bars(e13e14_data)
+
+ggsave(filename = "figures/frac_ab_barplot_e13_e14.png",
+       height = 100,
+       width = 200,
+       units = "mm",
+       dpi = 600)
+
+# plot line plots for each glycan seprately -------------------------------
+# Check for missing values
+sum(is.na(abundance_data_averaged$timepoint))
+sum(is.na(abundance_data_averaged$frac_abundance))
+sum(is.na(abundance_data_averaged$experiment))
+
+str(abundance_data_averaged) # Check the structure of your dataframe
+abundance_data_averaged$timepoint <- as.numeric(as.character(abundance_data_averaged$timepoint))
+
+
+ggplot(abundance_data_averaged, aes(x = timepoint, y = frac_abundance, color = experiment)) +
+  geom_point() +
+  geom_smooth(method = loess, se = FALSE) + # Remove fullrange = TRUE
+  facet_wrap(~modcom_name, 
+             scales = "free_y",
+             nrow = 2)
+
+ggplot(abundance_data_averaged %>% filter(experiment %in% c("E14")), 
+       aes(x = timepoint, y = frac_abundance, fill = experiment)) +
+  geom_col(
+    position = position_dodge(width = 0.9)  
+  ) + 
+  geom_errorbar(
+    aes(
+      ymin = frac_abundance - error,
+      ymax = frac_abundance + error,
+      group = experiment
+    ),
+    position = position_dodge(.9),
+    width = .5,
+    linewidth = .25
+  ) +
+  scale_fill_manual(values = color_mapping_experiment, 
+                    breaks = names(color_mapping_experiment)) +
+  facet_wrap(~modcom_name, 
+             scales = "free_y",
+             nrow = 2)
 
 
 # # vertical bar plot -------------------------------------------------------
