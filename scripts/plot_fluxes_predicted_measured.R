@@ -8,20 +8,20 @@ m_growth_rates <- measured_fluxes %>%
   filter(AA_meta == "Growth_rate") %>%
   mutate(Type = "measured")
 
-# m_growth_rates_nottshift <- m_growth_rates %>%
-#   filter(Condition == "Constant")
+m_growth_rates_nottshift <- m_growth_rates %>%
+  filter(Condition == "Constant")
 
-m_growth_rates_tshift <- m_growth_rates %>%
-  filter(Condition == "Temp. shifted")
+# m_growth_rates_tshift <- m_growth_rates %>%
+#   filter(Condition == "Temp. shifted")
 
 #predicted
-# p_growth_rates_iter <- read_csv("fba_results/nottshifted/case_1/mus_results.csv")
-# p_growth_rates_iter <- read_csv("fba_results/nottshifted/case_2.1/mus_results.csv")
-# p_growth_rates_iter <- read_csv("fba_results/nottshifted/case_3.1/mus_results.csv")
+p_growth_rates_iter <- read_csv("fba_results/nottshifted/case_1/mus_results.csv")
+p_growth_rates_iter <- read_csv("fba_results/nottshifted/case_2.1/mus_results.csv")
+p_growth_rates_iter <- read_csv("fba_results/nottshifted/case_3.1/mus_results.csv")
 
-p_growth_rates_iter <- read_csv("fba_results/tshifted/case_1/mus_results.csv")
-p_growth_rates_iter <- read_csv("fba_results/tshifted/case_2.1/mus_results.csv")
-p_growth_rates_iter <- read_csv("fba_results/tshifted/case_3.1/mus_results.csv")
+# p_growth_rates_iter <- read_csv("fba_results/tshifted/case_1/mus_results.csv")
+# p_growth_rates_iter <- read_csv("fba_results/tshifted/case_2.1/mus_results.csv")
+# p_growth_rates_iter <- read_csv("fba_results/tshifted/case_3.1/mus_results.csv")
 
 p_growth_rates <- p_growth_rates_iter %>%
   group_by(Experiment, Window) %>%
@@ -44,10 +44,28 @@ p_growth_rates <- p_growth_rates_iter %>%
 # merge dfs
   # mp_growth_rates <- m_growth_rates_nottshift %>%
   #   rbind(p_growth_rates)
-  
-  mp_growth_rates <- m_growth_rates_tshift %>%
-    rbind(p_growth_rates)
-  
+
+# Transformation to wider table for dot plots
+# Rename the Rate column in each dataframe to distinguish between them
+p_growth_rates <- p_growth_rates %>% 
+  rename(Predicted = Rate, Predicted_sd = SD) %>%
+  select(Experiment, Predicted, Predicted_sd, Window, Condition, AA_meta)
+# m_growth_rates_tshift <- m_growth_rates_tshift %>% 
+#   rename(Experimental = Rate, Experimental_sd = SD) %>%
+#   select(Experiment, Window, Experimental, Experimental_sd)
+
+m_growth_rates_nottshift <- m_growth_rates_nottshift %>% 
+  rename(Experimental = Rate, Experimental_sd = SD) %>%
+  select(Experiment, Window, Experimental, Experimental_sd)
+
+# Combine the two dataframes by the Group column
+# df_wide <- left_join(p_growth_rates, m_growth_rates_tshift, 
+#                      by = c("Experiment", "Window"),
+#                      keep = FALSE)
+ 
+df_wide <- left_join(p_growth_rates, m_growth_rates_nottshift, 
+                     by = c("Experiment", "Window"),
+                     keep = FALSE) 
 
 # prepare cell specific productivity ----------------------------
 # measured
@@ -57,16 +75,16 @@ p_growth_rates <- p_growth_rates_iter %>%
   
   m_titer_rates_nottshift <- m_titer_rates %>%
     filter(Condition == "Constant")
-  
-  m_titer_rates_tshift <- m_titer_rates %>%
-    filter(Condition == "Temp. shifted")
+  # 
+  # m_titer_rates_tshift <- m_titer_rates %>%
+  #   filter(Condition == "Temp. shifted")
   
 #predicted
   # p_titer_rates_iter <- read_csv("fba_results/nottshifted/case_2.2/mus_results.csv")
-  # p_titer_rates_iter <- read_csv("fba_results/nottshifted/case_3.2/mus_results.csv")
+  p_titer_rates_iter <- read_csv("fba_results/nottshifted/case_3.2/mus_results.csv")
   
-  p_titer_rates_iter <- read_csv("fba_results/tshifted/case_2.2/mus_results.csv")
-  p_titer_rates_iter <- read_csv("fba_results/tshifted/case_3.2/mus_results.csv")
+  # p_titer_rates_iter <- read_csv("fba_results/tshifted/case_2.2/mus_results.csv")
+  # p_titer_rates_iter <- read_csv("fba_results/tshifted/case_3.2/mus_results.csv")
   
   # p_titer_rates <- p_titer_rates_iter %>%
   #   group_by(Experiment, Window) %>%
@@ -90,8 +108,32 @@ p_growth_rates <- p_growth_rates_iter %>%
   # mp_titer_rates <- m_titer_rates_nottshift %>%
   #   rbind(p_titer_rates)
   
-  mp_titer_rates <- m_titer_rates_tshift %>%
-    rbind(p_titer_rates)
+  # mp_titer_rates <- m_titer_rates_tshift %>%
+  #   rbind(p_titer_rates)
+
+  
+  # Transformation to wider table for dot plots
+  # Rename the Rate column in each dataframe to distinguish between them
+  p_titer_rates <- p_titer_rates %>% 
+    rename(Predicted = Rate, Predicted_sd = SD) %>%
+    select(Experiment, Predicted, Predicted_sd, Window, Condition, AA_meta)
+
+  
+  m_titer_rates_tshift <- m_titer_rates_tshift %>% 
+    rename(Experimental = Rate, Experimental_sd = SD) %>%
+    select(Experiment, Window, Experimental, Experimental_sd)
+  
+  m_titer_rates_nottshift <- m_titer_rates_nottshift %>% 
+    rename(Experimental = Rate, Experimental_sd = SD) %>%
+    select(Experiment, Window, Experimental, Experimental_sd)
+  # Combine the two dataframes by the Group column
+  # df_wide <- left_join(p_growth_rates, m_growth_rates_tshift, 
+  #                      by = c("Experiment", "Window"),
+  #                      keep = FALSE)
+  
+  df_wide <- left_join(p_titer_rates, m_titer_rates_nottshift, 
+                       by = c("Experiment", "Window"),
+                       keep = FALSE) 
 
 # function to plot data ---------------------------------------------------
 plot_rates <- function(data_to_plot,
@@ -159,11 +201,46 @@ ggsave(filename = "figures/titer_rates_tshifted_case3_2.png",
        dpi = 600)
 
  
+
+# exp_growth vs pred_growth plots -------------------------------------------
+
+
+# Plotting measured vs predicted rates
+ggplot(df_wide, aes(x = Experimental, y = Predicted, color = Experiment)) +
+  geom_abline(intercept = 0, slope = 1, size = 1) +
+  geom_abline(intercept = 0, slope = 0.75, linetype = 2, color = 'grey40') +
+  geom_abline(intercept = 0, slope = 1.25, linetype = 2, color = 'grey40') +
+  geom_point(size = 3) +
+  geom_errorbar(
+    aes(xmin = Experimental - Experimental_sd,
+        xmax = Experimental + Experimental_sd,
+        group = Experiment),
+    position = position_dodge(.9),
+    width = .001,
+    linewidth = .25
+  ) +
+  geom_errorbar(
+    aes(ymin = Predicted - Predicted_sd,
+        ymax = Predicted + Predicted_sd,
+        group = Experiment),
+    position = position_dodge(.9),
+    width = .001,
+    linewidth = .25
+  ) +
+  scale_y_continuous(limits = c(-8e-5, 8e-5), labels = function(x) x * 1e5) +
+  scale_x_continuous(limits = c(-8e-5, 8e-5), labels = function(x) x * 1e5) +
+  labs(x = "Measured (Experimental) Rates", 
+       y = "Predicted Rates", 
+       title = "Predicted vs Measured Rates") +
+  facet_wrap(~Window, nrow = 1)
+
  
-  
-  
-  
-  
+ggsave(filename = "figures/fba/dotplots_titer_rates_nottshifted_case3_1.png",
+       height = 70,
+       width = 200,
+       units = "mm",
+       dpi = 600) 
+
   
   
   
