@@ -6,7 +6,7 @@ library(fs)
 
 # load abundance data -----------------------------------------------------
 
-load("analysis/abundance_data_sample.RData")
+load("analysis/500_ppm/abundance_data_none.RData")
 
 glycosylation <-  abundance_data_averaged  
 
@@ -23,7 +23,7 @@ composition_mapping <- list(
 )
 
 # for each coef make files for cafog analysis --------------------------------------
-coefs <-  unique(glycosylation$condition_br_tp) 
+coefs <-  unique(glycosylation$experiment_tp) 
 
 fs::dir_create(paste0("analysis/cafog/",coefs))
 
@@ -31,7 +31,7 @@ fs::dir_create(paste0("analysis/cafog/",coefs))
 for (coef in coefs) {
   print(coef)
   glycosylation %>%
-    filter(condition_br_tp == coef) %>%
+    filter(experiment_tp == coef) %>%
     select(modcom_name, frac_abundance, error) %>%
     rename(`#glycoform` = modcom_name,
            abundance = frac_abundance) %>%
@@ -39,7 +39,7 @@ for (coef in coefs) {
               col_names = TRUE)
   
   glycation %>%
-    filter(condition_br_tp == coef) %>%
+    filter(experiment_tp == coef) %>%
     select(modcom_name, frac_abundance, error) %>%
     rename(`#count` = modcom_name,
            abundance = frac_abundance) %>%
@@ -48,7 +48,7 @@ for (coef in coefs) {
     write_csv(paste0("analysis/cafog/",coef,"/glycation.csv"),
               col_names = TRUE)
   glycosylation %>%
-    filter(condition_br_tp == coef) %>%
+    filter(experiment_tp == coef) %>%
     select(modcom_name) %>%
     separate(modcom_name, into = c("glycoform_1", "glycoform_2"), sep = "/") %>%
     pivot_longer(cols = c("glycoform_1", "glycoform_2"), names_to = "names", values_to = "glycoforms") %>%
