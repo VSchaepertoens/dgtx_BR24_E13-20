@@ -68,26 +68,29 @@ abundance_data_averaged <- abundance_data %>%
                     ),
            sep = "_",
            remove = FALSE) %>%
-  mutate(experiment = factor(experiment, levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20"))) %>%
-  # filter(experiment != "E17")
+  mutate(experiment = factor(experiment, 
+                           levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")
+                           )) %>%
+  filter(experiment != c("E17")) %>%
+  filter(timepoint %in% c("120", "216", "288","336")) %>%
   {.}
 
 save(abundance_data,
      abundance_data_averaged,
      file = paste0("analysis/abundance_data_",pngase,".RData"))
 
-load("analysis/abundance_data_none.RData")
+load(paste0("analysis/abundance_data_",pngase,".RData"))
 # plot char runs data -----------------------------------------------------
 # Define the colors
 color_mapping_experiment <- c(
-  "E13" = "#e41a1c",
-  "E14" = "#377eb8",
-  "E15" = "#4daf4a",
-  "E16" = "#984ea3",
-  "E17" = "#ff7f00",
-  "E18" = "#ffff33",
-  "E19" = "#a65628",
-  "E20" = "#f781bf"
+  "E13" = "#7f3b08",
+  "E14" = "#2d004b",
+  "E15" = "#b35806",
+  "E16" = "#542788",
+  "E17" = "#e08214",
+  "E18" = "#8073ac",
+  "E19" = "#fdb863",
+  "E20" = "#b2abd2"
 )
 
 
@@ -106,21 +109,31 @@ ggplot(data, aes(x = modcom_name, y = frac_abundance, fill = experiment)) +
     width = .5,
     linewidth = .25
   ) +
-  facet_wrap(~ timepoint, ncol = 4) +
-  scale_fill_manual(values = color_mapping_experiment, 
-                    breaks = names(color_mapping_experiment)) +
-    # scale_color_manual(values = color_mapping, 
-    #                    breaks = names(color_mapping)) +
-    # scale_y_continuous(name = "fractional abundance (%)",
-    #                    breaks = y_breaks, 
-    #                    labels = \(x) abs(x), 
-    #                    limits = c(-60,60)) 
-  theme(axis.text.x = element_text(angle = 90, vjust = .5, hjust = 1))
+    guides(fill = guide_legend(nrow = 1)) +
+    facet_wrap(~ timepoint, nrow = 1) +
+    scale_fill_manual(values = color_mapping_experiment) +
+    scale_y_continuous(name = "fractional abundance (%)",
+                       # limits = c(0,65)
+                       ) +
+    xlab("") +
+    theme_bw() +
+    theme(text = element_text(size = 10, 
+                              face = "plain",
+                              family = "sans"),
+          axis.text.x = element_text(angle = 90, 
+                                     vjust = .5, 
+                                     hjust = 1),
+          axis.text = element_text(colour = "black"),
+          legend.position = "bottom",
+          legend.text = element_text(size = 10),
+          panel.border = element_blank()
+    ) +
+    NULL
 }
 
 plot_bars(abundance_data_averaged)
 
-ggsave(filename = "figures/pngase_frac_ab_barplot_all_experiments.png",
+ggsave(filename = "figures/pngase_frac_ab_barplot_minus17_all_experiments_4tp.png",
        height = 100,
        width = 250,
        units = "mm",
