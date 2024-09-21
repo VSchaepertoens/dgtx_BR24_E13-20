@@ -42,8 +42,8 @@ current_wd = os.getcwd()
 # %% load cho model
 
 models = {
-    "iCHO1766": "iCHOv1_final.xml",
-    # "iCHO2441": "iCHO2441.xml",
+    # "iCHO1766": "iCHOv1_final.xml",
+    "iCHO2441": "iCHO2441.xml",
     # "CHO-K1": "iCHOv1_K1_final.xml",
     # "CHOmpact": "CHOsmallmodel.json"
     # "CHOmpact_small": "CHOsmallmodel_activity4.json"
@@ -96,7 +96,7 @@ model = model_orig.copy()
 # %% load aa and metabolite data
 #rates = pd.read_csv("data/aa_rates_reordered_nottshifted_metabolites.csv")
 # rates = pd.read_csv("data/aa_rates_reordered_data2_nottshifted.csv")
-rates = pd.read_csv("data/aa_rates_reordered_data2_tshifted.csv")
+rates = pd.read_csv("data/aa_rates_reordered_data2_nottshifted.csv")
 
 # Define the specific values to be removed
 # values_to_remove = ['Growth_rate', 'Titer']  # Replace these with the actual values you want to remove
@@ -110,31 +110,59 @@ rates.drop(rates[rates['AA_meta'].isin(values_to_remove)].index, inplace=True)
 
 # %% check all names of reactions for which you want to set the bounds
 
+# uptake_names = {
+#     "Ala": "EX_ala_L_e_",
+#     "NH3": "EX_nh4_e_",
+#     "Arg": "EX_arg_L_e_",
+#     "Asn": "EX_asn_L_e_",
+#     "Asp": "EX_asp_L_e_",
+#     #"Cysteine": "EX_cys_L_e_",
+#     "GLC": "EX_glc_e_",
+#     "Glu": "EX_glu_L_e_",
+#     "Gln": "EX_gln_L_e_",
+#     "Gly": "EX_gly_e_",
+#     "His": "EX_his_L_e_",
+#     "Ile": "EX_ile_L_e_",
+#     "LAC": "EX_lac_L_e_",
+#     "Leu": "EX_leu_L_e_",
+#     "Lys": "EX_lys_L_e_",
+#     "Met": "EX_met_L_e_",
+#     "Phe": "EX_phe_L_e_",
+#     "Pro": "EX_pro_L_e_",
+#     "Ser": "EX_ser_L_e_",
+#     "Thr": "EX_thr_L_e_",
+#     "Trp": "EX_trp_L_e_",
+#     "Tyr": "EX_tyr_L_e_",
+#     "Val": "EX_val_L_e_",
+#     "Growth_rate": "biomass_cho_producing"
+# }
+
+# for iCHO2441
 uptake_names = {
-    "Ala": "EX_ala_L_e_",
-    "NH3": "EX_nh4_e_",
-    "Arg": "EX_arg_L_e_",
-    "Asn": "EX_asn_L_e_",
-    "Asp": "EX_asp_L_e_",
+    "Ala": "EX_ala_L(e)",
+    "NH3": "EX_nh4(e)",
+    "Arg": "EX_arg_L(e)",
+    "Asn": "EX_asn_L(e)",
+    "Asp": "EX_asp_L(e)",
     #"Cysteine": "EX_cys_L_e_",
-    "GLC": "EX_glc_e_",
-    "Glu": "EX_glu_L_e_",
-    "Gln": "EX_gln_L_e_",
-    "Gly": "EX_gly_e_",
-    "His": "EX_his_L_e_",
-    "Ile": "EX_ile_L_e_",
-    "LAC": "EX_lac_L_e_",
-    "Leu": "EX_leu_L_e_",
-    "Lys": "EX_lys_L_e_",
-    "Met": "EX_met_L_e_",
-    "Phe": "EX_phe_L_e_",
-    "Pro": "EX_pro_L_e_",
-    "Ser": "EX_ser_L_e_",
-    "Thr": "EX_thr_L_e_",
-    "Trp": "EX_trp_L_e_",
-    "Tyr": "EX_tyr_L_e_",
-    "Val": "EX_val_L_e_",
-    "Growth_rate": "biomass_cho_producing"
+    "GLC": "EX_glc(e)",
+    "Glu": "EX_glu_L(e)",
+    "Gln": "EX_gln_L(e)",
+    "Gly": "EX_gly(e)",
+    "His": "EX_his_L(e)",
+    "Ile": "EX_ile_L(e)",
+    "LAC": "EX_lac_L(e)",
+    "Leu": "EX_leu_L(e)",
+    "Lys": "EX_lys_L(e)",
+    "Met": "EX_met_L(e)",
+    "Phe": "EX_phe_L(e)",
+    "Pro": "EX_pro_L(e)",
+    "Ser": "EX_ser_L(e)",
+    "Thr": "EX_thr_L(e)",
+    "Trp": "EX_trp_L(e)",
+    "Tyr": "EX_tyr_L(e)",
+    "Val": "EX_val_L(e)",
+    "Growth_rate": "biomass_cho_prod"
 }
 
 taken_up = [
@@ -165,15 +193,23 @@ taken_up = [
     "EX_lnlnca_e_",
     "EX_Tyr_ggn_e_"
 ]
-for ex in model.reactions:
-    if ex.reversibility or ex.id in taken_up:
-        print(ex.bounds)
+# for ex in model.reactions:
+#     if ex.reversibility or ex.id in taken_up:
+#         print(ex.bounds)
 
 # Turn off igg and epo production
+
+reaction = model.reactions.get_by_id('DM_epo[g]')
+
+# Set the lower and upper bounds to 0
+reaction.lower_bound = 0
+reaction.upper_bound = 0
+print(f"Reaction {reaction.id} bounds set to: [{reaction.lower_bound}, {reaction.upper_bound}]")
+
 # model.reactions.DM_igg_g_.lower_bound = 0
 # model.reactions.DM_igg_g_.upper_bound = 0
-model.reactions.DM_epo_g_.lower_bound = 0
-model.reactions.DM_epo_g_.upper_bound = 0
+# model.reactions.DM_epo_g_.lower_bound = 0
+# model.reactions.DM_epo_g_.upper_bound = 0
 
 
 # Set the objective function
@@ -186,7 +222,7 @@ model.reactions.DM_epo_g_.upper_bound = 0
 # model.reactions.biomass_cho_producing.upper_bound = 0
 # model.reactions.biomass_cho_producing.lower_bound = 0
 
-model.objective = "DM_igg_g_" 
+model.objective = "DM_igg[g]" 
 model.reactions.biomass_cho.upper_bound = 0
 model.reactions.biomass_cho.lower_bound = 0
 
@@ -378,8 +414,8 @@ for ex in reaction_data:
 reaction_data_df = pd.DataFrame(reaction_data_list)
 
 # Save DataFrames to CSV files
-mus_df.to_csv('fba_results/mus_results.csv', index=False)
-reaction_data_df.to_csv('fba_results/reaction_data_results.csv', index=False)
+mus_df.to_csv('fba_results/mus_results_icho2441.csv', index=False)
+reaction_data_df.to_csv('fba_results/reaction_data_results_icho2441.csv', index=False)
 
 #%%
 # Calculate mean and standard deviation of mus for each phase

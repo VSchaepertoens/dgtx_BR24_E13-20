@@ -161,34 +161,34 @@ uptake_names = {
     "Val": "EX_val_L(e)"
 }
 
-taken_up = [
-    "EX_gln_L_e_",
-    "EX_cys_L_e_",
-    "EX_arg_L_e_",
-    "EX_asn_L_e_",
-    "EX_asp_L_e_",
-    "EX_glc_e_",
-    "EX_glu_L_e_",
-    "EX_h_e_",
-    "EX_h2o_e_",
-    "EX_his_L_e_",
-    "EX_ile_L_e_",
-    "EX_leu_L_e_",
-    "EX_lys_L_e_",
-    "EX_met_L_e_",
-    "EX_o2_e_",
-    "EX_phe_L_e_",
-    "EX_pi_e_",
-    "EX_pro_L_e_",
-    "EX_ser_L_e_",
-    "EX_thr_L_e_",
-    "EX_trp_L_e_",
-    "EX_tyr_L_e_",
-    "EX_val_L_e_",
-    "EX_lnlc_e_",
-    "EX_lnlnca_e_",
-    "EX_Tyr_ggn_e_"
-]
+# taken_up = [
+#     "EX_gln_L_e_",
+#     "EX_cys_L_e_",
+#     "EX_arg_L_e_",
+#     "EX_asn_L_e_",
+#     "EX_asp_L_e_",
+#     "EX_glc_e_",
+#     "EX_glu_L_e_",
+#     "EX_h_e_",
+#     "EX_h2o_e_",
+#     "EX_his_L_e_",
+#     "EX_ile_L_e_",
+#     "EX_leu_L_e_",
+#     "EX_lys_L_e_",
+#     "EX_met_L_e_",
+#     "EX_o2_e_",
+#     "EX_phe_L_e_",
+#     "EX_pi_e_",
+#     "EX_pro_L_e_",
+#     "EX_ser_L_e_",
+#     "EX_thr_L_e_",
+#     "EX_trp_L_e_",
+#     "EX_tyr_L_e_",
+#     "EX_val_L_e_",
+#     "EX_lnlc_e_",
+#     "EX_lnlnca_e_",
+#     "EX_Tyr_ggn_e_"
+# ]
 # for ex in model.reactions:
 #     if ex.reversibility or ex.id in taken_up:
 #         print(ex.bounds)

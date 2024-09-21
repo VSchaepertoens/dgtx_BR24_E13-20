@@ -43,9 +43,9 @@ current_wd = os.getcwd()
 
 models = {
     # "iCHO1766": "iCHOv1_final.xml",
-    # "iCHO2441": "iCHO2441.xml",
+    "iCHO2441": "iCHO2441.xml",
     # "CHO-K1": "iCHOv1_K1_final.xml",
-    "CHOmpact": "CHOsmallmodel.json"
+    # "CHOmpact": "CHOsmallmodel.json"
     # "CHOmpact_small": "CHOsmallmodel_activity4.json"
     # "K1par-0mMCD": "iCHO_K1par-0mMCD.xml"
     }
@@ -96,11 +96,11 @@ model = model_orig.copy()
 # %% load aa and metabolite data
 #rates = pd.read_csv("data/aa_rates_reordered_nottshifted_metabolites.csv")
 # rates = pd.read_csv("data/aa_rates_reordered_data2_nottshifted.csv")
-rates = pd.read_csv("data/aa_rates_reordered_data2_tshifted.csv")
+rates = pd.read_csv("data/aa_rates_reordered_data2_nottshifted.csv")
 
 # Define the specific values to be removed
 # values_to_remove = ['Growth_rate', 'Titer']  # Replace these with the actual values you want to remove
-values_to_remove = ['Growth_rate', 'Titer'] 
+values_to_remove = ['Growth_rate'] 
 # Remove rows where 'aa_rates' column contains any of the specified values
 # rates_filtered = rates[~rates['AA_meta'].isin(values_to_remove)]
 
@@ -135,66 +135,110 @@ rates.drop(rates[rates['AA_meta'].isin(values_to_remove)].index, inplace=True)
 #     "Val": "EX_val_L_e_",
 #     "Titer": "DM_igg_g_"
 # }
-#CHOmpact
-uptake_names = {
-    "Ala": "F110",
-    "NH3": "F108",
-    "Arg": "F111",
-    "Asn": "F112",
-    "Asp": "F113",
-    #"Cysteine": "EX_cys_L_e_",
-    "GLC": "F105",
-    "Glu": "F115",
-    "Gln": "F114",
-    "Gly": "F116",
-    "His": "F117",
-    "Ile": "F118",
-    "LAC": "F107",
-    "Leu": "F119",
-    "Lys": "F120",
-    "Met": "F121",
-    "Phe": "F122",
-    "Pro": "F123",
-    "Ser": "F124",
-    "Thr": "F125",
-    "Trp": "F126",
-    "Tyr": "F127",
-    "Val": "F128",
-    "Titer": "F143"
-}
-taken_up = [
-    "EX_gln_L_e_",
-    "EX_cys_L_e_",
-    "EX_arg_L_e_",
-    "EX_asn_L_e_",
-    "EX_asp_L_e_",
-    "EX_glc_e_",
-    "EX_glu_L_e_",
-    "EX_h_e_",
-    "EX_h2o_e_",
-    "EX_his_L_e_",
-    "EX_ile_L_e_",
-    "EX_leu_L_e_",
-    "EX_lys_L_e_",
-    "EX_met_L_e_",
-    "EX_o2_e_",
-    "EX_phe_L_e_",
-    "EX_pi_e_",
-    "EX_pro_L_e_",
-    "EX_ser_L_e_",
-    "EX_thr_L_e_",
-    "EX_trp_L_e_",
-    "EX_tyr_L_e_",
-    "EX_val_L_e_",
-    "EX_lnlc_e_",
-    "EX_lnlnca_e_",
-    "EX_Tyr_ggn_e_"
-]
-for ex in model.reactions:
-    if ex.reversibility or ex.id in taken_up:
-        print(ex.bounds)
+# #CHOmpact
+# uptake_names = {
+#     "Ala": "F110",
+#     "NH3": "F108",
+#     "Arg": "F111",
+#     "Asn": "F112",
+#     "Asp": "F113",
+#     #"Cysteine": "EX_cys_L_e_",
+#     "GLC": "F105",
+#     "Glu": "F115",
+#     "Gln": "F114",
+#     "Gly": "F116",
+#     "His": "F117",
+#     "Ile": "F118",
+#     "LAC": "F107",
+#     "Leu": "F119",
+#     "Lys": "F120",
+#     "Met": "F121",
+#     "Phe": "F122",
+#     "Pro": "F123",
+#     "Ser": "F124",
+#     "Thr": "F125",
+#     "Trp": "F126",
+#     "Tyr": "F127",
+#     "Val": "F128",
+#     "Titer": "F143"
+# }
 
-# Turn off igg and epo production
+# for iCHO2441
+uptake_names = {
+    "Ala": "EX_ala_L(e)",
+    "NH3": "EX_nh4(e)",
+    "Arg": "EX_arg_L(e)",
+    "Asn": "EX_asn_L(e)",
+    "Asp": "EX_asp_L(e)",
+    #"Cysteine": "EX_cys_L_e_",
+    "GLC": "EX_glc(e)",
+    "Glu": "EX_glu_L(e)",
+    "Gln": "EX_gln_L(e)",
+    "Gly": "EX_gly(e)",
+    "His": "EX_his_L(e)",
+    "Ile": "EX_ile_L(e)",
+    "LAC": "EX_lac_L(e)",
+    "Leu": "EX_leu_L(e)",
+    "Lys": "EX_lys_L(e)",
+    "Met": "EX_met_L(e)",
+    "Phe": "EX_phe_L(e)",
+    "Pro": "EX_pro_L(e)",
+    "Ser": "EX_ser_L(e)",
+    "Thr": "EX_thr_L(e)",
+    "Trp": "EX_trp_L(e)",
+    "Tyr": "EX_tyr_L(e)",
+    "Val": "EX_val_L(e)",
+    "Titer": "DM_igg[g]"
+}
+
+# taken_up = [
+#     "EX_gln_L_e_",
+#     "EX_cys_L_e_",
+#     "EX_arg_L_e_",
+#     "EX_asn_L_e_",
+#     "EX_asp_L_e_",
+#     "EX_glc_e_",
+#     "EX_glu_L_e_",
+#     "EX_h_e_",
+#     "EX_h2o_e_",
+#     "EX_his_L_e_",
+#     "EX_ile_L_e_",
+#     "EX_leu_L_e_",
+#     "EX_lys_L_e_",
+#     "EX_met_L_e_",
+#     "EX_o2_e_",
+#     "EX_phe_L_e_",
+#     "EX_pi_e_",
+#     "EX_pro_L_e_",
+#     "EX_ser_L_e_",
+#     "EX_thr_L_e_",
+#     "EX_trp_L_e_",
+#     "EX_tyr_L_e_",
+#     "EX_val_L_e_",
+#     "EX_lnlc_e_",
+#     "EX_lnlnca_e_",
+#     "EX_Tyr_ggn_e_"
+# ]
+# for ex in model.reactions:
+#     if ex.reversibility or ex.id in taken_up:
+#         print(ex.bounds)
+
+# # Turn off igg and epo production
+# reaction = model.reactions.get_by_id('DM_igg[g]')
+
+# # Set the lower and upper bounds to 0
+# reaction.lower_bound = 0
+# reaction.upper_bound = 0
+# print(f"Reaction {reaction.id} bounds set to: [{reaction.lower_bound}, {reaction.upper_bound}]")
+
+
+reaction = model.reactions.get_by_id('DM_epo[g]')
+
+# Set the lower and upper bounds to 0
+reaction.lower_bound = 0
+reaction.upper_bound = 0
+print(f"Reaction {reaction.id} bounds set to: [{reaction.lower_bound}, {reaction.upper_bound}]")
+
 # model.reactions.DM_igg_g_.lower_bound = 0
 # model.reactions.DM_igg_g_.upper_bound = 0
 # model.reactions.DM_epo_g_.lower_bound = 0
@@ -213,46 +257,50 @@ for ex in model.reactions:
 # model.reactions.biomass_cho_producing.upper_bound = 0
 # model.reactions.biomass_cho_producing.lower_bound = 0
 
-# Specific for CHOmpact
-model.objective = "F90" #index 6618
+model.objective = "biomass_cho_prod" 
+model.reactions.biomass_cho.upper_bound = 0
+model.reactions.biomass_cho.lower_bound = 0
 
-model.reactions.F129.lower_bound = 0.6*0.9
-model.reactions.F129.upper_bound = 0.6*1.1
-model.reactions.F130.lower_bound = 0.05*0.9
-model.reactions.F130.upper_bound = 0.05*1.1
-model.reactions.F131.lower_bound = 0.11*0.9
-model.reactions.F131.upper_bound = 0.11*1.1
-model.reactions.F132.lower_bound = 0.45*0.9
-model.reactions.F132.upper_bound = 0.45*1.1
-model.reactions.F133.lower_bound = 0.46*0.9
-model.reactions.F133.upper_bound = 0.46*1.1
-model.reactions.F134.lower_bound = 1.28*0.9
-model.reactions.F134.upper_bound = 1.28*1.1
-model.reactions.F135.lower_bound = 0.02*0.9
-model.reactions.F135.upper_bound = 0.02*1.1
-model.reactions.F136.lower_bound = 3.41*0.9
-model.reactions.F136.upper_bound = 3.41*1.1
-model.reactions.F137.lower_bound = 0.84*0.9
-model.reactions.F137.upper_bound = 0.84*1.1
-model.reactions.F138.lower_bound = 4.1*0.9
-model.reactions.F138.upper_bound = 4.1*1.1
-model.reactions.F139.lower_bound = 0.19*0.9
-model.reactions.F139.upper_bound = 0.19*1.1
-model.reactions.F140.lower_bound = 0.09*0.9
-model.reactions.F140.upper_bound = 0.09*1.1
-# data from the compact paper SUpplementary Data for additional reaction constrains
-# F_129	0.6	0.6	0.6	0.46	0.46
-# F_130	0.05	0.05	0.05	0.02	0.02
-# F_131	0.11	0.11	0.11	0.04	0.04
-# F_132	0.45	0.45	0.45	0.24	0.24
-# F_133	0.46	0.46	0.46	0.46	0.46
-# F_134	1.28	1.28	1.28	1.56	1.56
-# F_135	0.02	0.02	0.02	2.08	2.08
-# F_136	3.41	3.41	3.41	1.84	1.84
-# F_137	0.84	0.84	0.84	0.41	0.41
-# F_138	4.1	4.1	4.1	5.14	5.14
-# F_139	0.19	0.19	0.19	0.22	0.22
-# F_140	0.09	0.09	0.09	0.08	0.08
+# # Specific for CHOmpact
+# model.objective = "F90" #index 6618
+
+# model.reactions.F129.lower_bound = 0.6*0.9
+# model.reactions.F129.upper_bound = 0.6*1.1
+# model.reactions.F130.lower_bound = 0.05*0.9
+# model.reactions.F130.upper_bound = 0.05*1.1
+# model.reactions.F131.lower_bound = 0.11*0.9
+# model.reactions.F131.upper_bound = 0.11*1.1
+# model.reactions.F132.lower_bound = 0.45*0.9
+# model.reactions.F132.upper_bound = 0.45*1.1
+# model.reactions.F133.lower_bound = 0.46*0.9
+# model.reactions.F133.upper_bound = 0.46*1.1
+# model.reactions.F134.lower_bound = 1.28*0.9
+# model.reactions.F134.upper_bound = 1.28*1.1
+# model.reactions.F135.lower_bound = 0.02*0.9
+# model.reactions.F135.upper_bound = 0.02*1.1
+# model.reactions.F136.lower_bound = 3.41*0.9
+# model.reactions.F136.upper_bound = 3.41*1.1
+# model.reactions.F137.lower_bound = 0.84*0.9
+# model.reactions.F137.upper_bound = 0.84*1.1
+# model.reactions.F138.lower_bound = 4.1*0.9
+# model.reactions.F138.upper_bound = 4.1*1.1
+# model.reactions.F139.lower_bound = 0.19*0.9
+# model.reactions.F139.upper_bound = 0.19*1.1
+# model.reactions.F140.lower_bound = 0.09*0.9
+# model.reactions.F140.upper_bound = 0.09*1.1
+# # data from the compact paper SUpplementary Data for additional reaction constrains
+# # F_129	0.6	0.6	0.6	0.46	0.46
+# # F_130	0.05	0.05	0.05	0.02	0.02
+# # F_131	0.11	0.11	0.11	0.04	0.04
+# # F_132	0.45	0.45	0.45	0.24	0.24
+# # F_133	0.46	0.46	0.46	0.46	0.46
+# # F_134	1.28	1.28	1.28	1.56	1.56
+# # F_135	0.02	0.02	0.02	2.08	2.08
+# # F_136	3.41	3.41	3.41	1.84	1.84
+# # F_137	0.84	0.84	0.84	0.41	0.41
+# # F_138	4.1	4.1	4.1	5.14	5.14
+# # F_139	0.19	0.19	0.19	0.22	0.22
+# # F_140	0.09	0.09	0.09	0.08	0.08
 
 
 # %%
@@ -310,7 +358,7 @@ model.reactions.F140.upper_bound = 0.09*1.1
 
 # %%
 startTime = datetime.now()
-N = 100
+N = 10
 
 # Initialize dictionaries
 mus = {}
@@ -442,8 +490,8 @@ for ex in reaction_data:
 reaction_data_df = pd.DataFrame(reaction_data_list)
 
 # Save DataFrames to CSV files
-mus_df.to_csv('fba_results/mus_results.csv', index=False)
-reaction_data_df.to_csv('fba_results/reaction_data_results.csv', index=False)
+mus_df.to_csv('fba_results/mus_results_icho2441.csv', index=False)
+reaction_data_df.to_csv('fba_results/reaction_data_results_icho2441.csv', index=False)
 
 #%%
 # Calculate mean and standard deviation of mus for each phase
