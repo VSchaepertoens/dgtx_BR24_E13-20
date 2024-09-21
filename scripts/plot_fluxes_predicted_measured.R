@@ -8,15 +8,15 @@ m_growth_rates <- measured_fluxes %>%
   filter(AA_meta == "Growth_rate") %>%
   mutate(Type = "measured")
 
-m_growth_rates_nottshift <- m_growth_rates %>%
-  filter(Condition == "Constant")
+# m_growth_rates_nottshift <- m_growth_rates %>%
+#   filter(Condition == "Constant")
 
-# m_growth_rates_tshift <- m_growth_rates %>%
-#   filter(Condition == "Temp. shifted")
+m_growth_rates_tshift <- m_growth_rates %>%
+  filter(Condition == "Temp. shifted")
 
 #predicted
-p_growth_rates_iter <- read_csv("fba_results/nottshifted/case_1/mus_results.csv")
-p_growth_rates_iter <- read_csv("fba_results/nottshifted/case_2.1/mus_results.csv")
+p_growth_rates_iter <- read_csv("fba_results/tshifted/case_1/mus_results_icho2441.csv")
+p_growth_rates_iter <- read_csv("fba_results/tshifted/case_2.1/mus_results_icho2441.csv")
 p_growth_rates_iter <- read_csv("fba_results/nottshifted/case_3.1/mus_results.csv")
 
 # p_growth_rates_iter <- read_csv("fba_results/tshifted/case_1/mus_results.csv")
@@ -32,18 +32,18 @@ p_growth_rates <- p_growth_rates_iter %>%
   mutate(Type = "predicted") %>%
   ungroup()
 
-# p_growth_rates <- p_growth_rates_iter %>%
-#   group_by(Experiment, Window) %>%
-#   summarise(Rate = mean(mu),
-#             SD = sd(mu)) %>%
-#   mutate(Condition = "Constant",
-#          AA_meta = "Growth_rate") %>%
-#   mutate(Type = "predicted") %>%
-#   ungroup()
-  
-# merge dfs
-  # mp_growth_rates <- m_growth_rates_nottshift %>%
-  #   rbind(p_growth_rates)
+p_growth_rates <- p_growth_rates_iter %>%
+  group_by(Experiment, Window) %>%
+  summarise(Rate = mean(mu),
+            SD = sd(mu)) %>%
+  mutate(Condition = "Constant",
+         AA_meta = "Growth_rate") %>%
+  mutate(Type = "predicted") %>%
+  ungroup()
+
+#merge dfs
+mp_growth_rates <- m_growth_rates_tshift %>%
+  rbind(p_growth_rates)
 
 # Transformation to wider table for dot plots
 # Rename the Rate column in each dataframe to distinguish between them
@@ -73,15 +73,15 @@ df_wide <- left_join(p_growth_rates, m_growth_rates_nottshift,
     filter(AA_meta == "Titer") %>%
     mutate(Type = "measured")
   
-  m_titer_rates_nottshift <- m_titer_rates %>%
-    filter(Condition == "Constant")
+  # m_titer_rates_nottshift <- m_titer_rates %>%
+  #   filter(Condition == "Constant")
   # 
-  # m_titer_rates_tshift <- m_titer_rates %>%
-  #   filter(Condition == "Temp. shifted")
+  m_titer_rates_tshift <- m_titer_rates %>%
+    filter(Condition == "Temp. shifted")
   
 #predicted
-  # p_titer_rates_iter <- read_csv("fba_results/nottshifted/case_2.2/mus_results.csv")
-  p_titer_rates_iter <- read_csv("fba_results/nottshifted/case_3.2/mus_results.csv")
+  p_titer_rates_iter <- read_csv("fba_results/tshifted/case_2.2/mus_results_icho2441.csv")
+  # p_titer_rates_iter <- read_csv("fba_results/nottshifted/case_3.2/mus_results.csv")
   
   # p_titer_rates_iter <- read_csv("fba_results/tshifted/case_2.2/mus_results.csv")
   # p_titer_rates_iter <- read_csv("fba_results/tshifted/case_3.2/mus_results.csv")
@@ -107,9 +107,9 @@ df_wide <- left_join(p_growth_rates, m_growth_rates_nottshift,
 # merge dfs
   # mp_titer_rates <- m_titer_rates_nottshift %>%
   #   rbind(p_titer_rates)
-  
-  # mp_titer_rates <- m_titer_rates_tshift %>%
-  #   rbind(p_titer_rates)
+
+  mp_titer_rates <- m_titer_rates_tshift %>%
+    rbind(p_titer_rates)
 
   
   # Transformation to wider table for dot plots
@@ -178,7 +178,7 @@ plot_rates(data_to_plot = mp_growth_rates,
            y_axis_limits = growth_rate_limits,
            plot_growth_rate = TRUE) 
 
-ggsave(filename = "figures/growth_rates_tshifted_case3_1.png",
+ggsave(filename = "figures/growth_rates_tshifted_case2_1_icho2441.png",
        height = 70,
        width = 200,
        units = "mm",
@@ -194,7 +194,7 @@ plot_rates(data_to_plot = mp_titer_rates,
            y_axis_limits = titer_rate_limits,
            plot_growth_rate = FALSE)
 
-ggsave(filename = "figures/titer_rates_tshifted_case3_2.png",
+ggsave(filename = "figures/titer_rates_tshifted_case2_2_icho2441.png",
        height = 70,
        width = 200,
        units = "mm",
