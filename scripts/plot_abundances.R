@@ -71,8 +71,6 @@ abundance_data_averaged <- abundance_data %>%
   mutate(experiment = factor(experiment, 
                            levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")
                            )) %>%
-  filter(experiment != c("E17")) %>%
-  filter(timepoint %in% c("120", "216", "288","336")) %>%
   {.}
 
 save(abundance_data,
@@ -83,18 +81,19 @@ load(paste0("analysis/abundance_data_",pngase,".RData"))
 # plot char runs data -----------------------------------------------------
 # Define the colors
 color_mapping_experiment <- c(
-  "E13" = "#7f3b08",
-  "E14" = "#2d004b",
-  "E15" = "#b35806",
-  "E16" = "#542788",
-  "E17" = "#e08214",
-  "E18" = "#8073ac",
-  "E19" = "#fdb863",
-  "E20" = "#b2abd2"
+  "E13" = "#FD8D3C",
+  "E14" = "#9E9AC8",
+  "E15" = "#F16913",
+  "E16" = "#807DBA",
+  "E17" = "#D94801",
+  "E18" = "#6A51A3",
+  "E19" = "#A63603",
+  "E20" = "#54278F"
 )
 
 
-plot_bars <- function(data){
+plot_bars <- function(data,
+                      row_number = 1){
 ggplot(data, aes(x = modcom_name, y = frac_abundance, fill = experiment)) +
   geom_col(
     position = position_dodge(width = 0.9)  
@@ -109,8 +108,8 @@ ggplot(data, aes(x = modcom_name, y = frac_abundance, fill = experiment)) +
     width = .5,
     linewidth = .25
   ) +
-    guides(fill = guide_legend(nrow = 1)) +
-    facet_wrap(~ timepoint, nrow = 1) +
+    guides(fill = guide_legend(nrow = row_number)) +
+    facet_wrap(~ timepoint, nrow = row_number) +
     scale_fill_manual(values = color_mapping_experiment) +
     scale_y_continuous(name = "fractional abundance (%)",
                        # limits = c(0,65)
@@ -131,13 +130,32 @@ ggplot(data, aes(x = modcom_name, y = frac_abundance, fill = experiment)) +
     NULL
 }
 
-plot_bars(abundance_data_averaged)
+plot_bars(abundance_data_averaged, row_number = 2)
+
+ggsave(filename = "figures/pngase_frac_ab_barplot_all_experiments.png",
+       height = 200,
+       width = 250,
+       units = "mm",
+       dpi = 600)
+
+plot_bars(abundance_data_averaged %>% filter(experiment != c("E17")), 
+          row_number = 2)
+
+ggsave(filename = "figures/pngase_frac_ab_barplot_minus17_all_experiments.png",
+       height = 200,
+       width = 250,
+       units = "mm",
+       dpi = 600)
+
+plot_bars(abundance_data_averaged %>% filter(timepoint %in% c("120", "216", "288","336") & experiment != c("E17")), 
+          row_number = 1)
 
 ggsave(filename = "figures/pngase_frac_ab_barplot_minus17_all_experiments_4tp.png",
        height = 100,
        width = 250,
        units = "mm",
        dpi = 600)
+
 
 constant_data <- abundance_data_averaged %>%
   filter(experiment %in% c("E13", "E15", "E17", "E19"))

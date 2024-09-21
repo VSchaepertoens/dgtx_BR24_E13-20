@@ -4,6 +4,7 @@ library(ComplexHeatmap)
 library(circlize)
 library(RColorBrewer)
 library(fs)
+library(WriteXLS)
 
 # load cafog corrected data -----------------------------------------------
 
@@ -59,20 +60,40 @@ corr_abundance_data <- abundance_data %>%
            remove = FALSE) %>%
   mutate(experiment = factor(experiment, levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20"))) %>%
   # filter(experiment != "E17")
-  drop_na()
+  # drop_na()
   {.}
 
 save(corr_abundance_data, file = "analysis/corr_abundance_data.RData")
 
 load("analysis/corr_abundance_data.RData")
 
+correct_order <- c("none/G0F",
+                   "none/G1F",
+                   "none/G2F",
+                   "G0/G0",
+                   "G0/G0F",
+                   "G0F/G0F",
+                   "G0F/G1F",
+                   "G1F/G1F",
+                   "G1F/G2F",
+                   "G2F/G2F")
+
 corr_abundance_data <- corr_abundance_data %>%
-  drop_na() %>%
+  # drop_na() %>%
   mutate(experiment = factor(experiment, 
                              levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")
                              )) %>%
-  filter(experiment != c("E17")) %>%
-  filter(timepoint %in% c("120", "216", "288","336"))
+  # filter(experiment != c("E17")) %>%
+  group_by(experiment, timepoint) %>%
+  arrange(match(glycoform1, correct_order)) %>%
+  ungroup() %>%
+  arrange(experiment_tp)
+  {.}
+
+write_csv(x = corr_abundance_data,
+          file = "analysis/corr_abundance_data_4tp.csv")
+WriteXLS(x = corr_abundance_data,
+         ExcelFileName = "analysis/corr_abundance_data_4tp.xls")
 # plot char runs data -----------------------------------------------------
 # Define the colors
 # color_mapping_experiment <- c(
@@ -87,19 +108,23 @@ corr_abundance_data <- corr_abundance_data %>%
 # )
 
 color_mapping_experiment <- c(
-  "E13" = "#7f3b08",
-  "E14" = "#2d004b",
-  "E15" = "#b35806",
-  "E16" = "#542788",
-  "E17" = "#e08214",
-  "E18" = "#8073ac",
-  "E19" = "#fdb863",
-  "E20" = "#b2abd2"
+  "E13" = "#FD8D3C",
+  "E14" = "#9E9AC8",
+  "E15" = "#F16913",
+  "E16" = "#807DBA",
+  "E17" = "#D94801",
+  "E18" = "#6A51A3",
+  "E19" = "#A63603",
+  "E20" = "#54278F"
 )
+# #from Larissa
+# c("#FDAE6B", "#FD8D3C", "#F16913", "#D94801", "#A63603")
+# c("#BCBDDC", "#9E9AC8", "#807DBA", "#6A51A3", "#54278F")
 
 
 plot_bars <- function(data,
-                      title = "Fractional abundance"){
+                      title = "Fractional abundance",
+                      row_number = 1){
   ggplot(data, aes(x = glycoform1, y = corr_abundance, fill = experiment)) +
     geom_col(
       position = position_dodge(width = 0.9)  
@@ -114,8 +139,8 @@ plot_bars <- function(data,
       width = .5,
       linewidth = .25
     ) +
-    guides(fill = guide_legend(nrow = 1)) +
-    facet_wrap(~ timepoint, nrow = 1) +
+    guides(fill = guide_legend(nrow = row_number)) +
+    facet_wrap(~ timepoint, nrow = row_number) +
     scale_fill_manual(values = color_mapping_experiment) +
     scale_y_continuous(name = "fractional abundance (%)",
                        limits = c(0,65)) +
@@ -137,9 +162,49 @@ plot_bars <- function(data,
   }
   
 
-#plot all experiments
+## plot all experiments
 plot_bars(corr_abundance_data,
-          title = "Fractional abundance of glycans in all experiments")
+          title = "Fractional abundance of glycans in all experiments",
+          row_number = 2)
+
+ggsave(filename = "figures/corrected_frac_ab_barplot_all_experiments.png",
+       height = 200,
+       width = 250,
+       units = "mm",
+       dpi = 600)
+
+## plot constant t experiments
+constant_data <- corr_abundance_data %>%
+  filter(experiment %in% c("E13", "E15", "E19"))
+plot_bars(constant_data,
+          title = "Fractional abundance of glycans in constant temperature experiments",
+          row_number = 2)
+
+ggsave(filename = "figures/corrected_frac_ab_barplot_minus17_constant_experiments.png",
+       height = 200,
+       width = 250,
+       units = "mm",
+       dpi = 600)
+
+## plot shifted t experiments
+tshifted_data <- corr_abundance_data %>%
+  filter(experiment %in% c("E14", "E16", "E18", "E20"))
+plot_bars(tshifted_data,
+          title = "Fractional abundance of glycans in temperature shifted experiments",
+          row_number = 2)
+
+ggsave(filename = "figures/corrected_frac_ab_barplot_tshifted_experiments.png",
+       height = 200,
+       width = 250,
+       units = "mm",
+       dpi = 600)
+
+## plot all experiments, only 4 timepoints
+four_tp_data <-  corr_abundance_data %>% filter(timepoint %in% c("120", "216", "288","336"))
+
+plot_bars(four_tp_data,
+          title = "Fractional abundance of glycans in all experiments",
+          row_number = 1)
 
 ggsave(filename = "figures/corrected_frac_ab_barplot_minus17_all_experiments_4tp.png",
        height = 100,
@@ -147,19 +212,12 @@ ggsave(filename = "figures/corrected_frac_ab_barplot_minus17_all_experiments_4tp
        units = "mm",
        dpi = 600)
 
-#plot all experiments minus 17
-# plot_bars(corr_abundance_data %>% filter(experiment != "E17"))
-# 
-# ggsave(filename = "figures/corrected_frac_ab_barplot_minus17_all_experiments.png",
-#        height = 100,
-#        width = 250,
-#        units = "mm",
-#        dpi = 600)
-
-constant_data <- corr_abundance_data %>%
+## plot constant t experiments, only 4 timepoints
+constant_four_tp_data <- four_tp_data %>%
   filter(experiment %in% c("E13", "E15", "E19"))
-plot_bars(constant_data,
-          title = "Fractional abundance of glycans in constant temperature experiments")
+plot_bars(constant_four_tp_data,
+          title = "Fractional abundance of glycans in constant temperature experiments",
+          row_number = 1)
 
 ggsave(filename = "figures/corrected_frac_ab_barplot_minus17_constant_experiments_4tp.png",
        height = 100,
@@ -167,16 +225,70 @@ ggsave(filename = "figures/corrected_frac_ab_barplot_minus17_constant_experiment
        units = "mm",
        dpi = 600)
 
-tshifted_data <- corr_abundance_data %>%
+## plot shifted t experiments, only 4 timepoints
+tshifted_four_tp_data <- four_tp_data %>%
   filter(experiment %in% c("E14", "E16", "E18", "E20"))
-plot_bars(tshifted_data,
-          title = "Fractional abundance of glycans in temperature shifted experiments")
+plot_bars(tshifted_four_tp_data,
+          title = "Fractional abundance of glycans in temperature shifted experiments",
+          row_number = 1)
 
 ggsave(filename = "figures/corrected_frac_ab_barplot_tshifted_experiments_4tp.png",
        height = 100,
        width = 250,
        units = "mm",
        dpi = 600)
+
+# plot line plots for each glycan seprately -------------------------------
+
+str(corr_abundance_data) # Check the structure of your dataframe
+corr_abundance_data$timepoint <- as.numeric(as.character(corr_abundance_data$timepoint))
+
+plot_over_time <- function(data,
+                           which_experiment = c("E14")) {
+ggplot(data %>% filter(experiment %in% which_experiment), 
+       aes(x = timepoint, y = corr_abundance, color = experiment)) +
+  geom_point() +
+  geom_smooth(method = loess, se = FALSE) + # Remove fullrange = TRUE
+  scale_color_manual(values = color_mapping_experiment) +
+  facet_wrap(~glycoform1, 
+             scales = "free_y",
+             nrow = 2)
+  
+  ggsave(filename = paste0("figures/corrected_frac_ab_lineplot_over_time",which_experiment,".png"),
+         height = 100,
+         width = 250,
+         units = "mm",
+         dpi = 600)
+
+ggplot(data %>% filter(experiment %in% which_experiment), 
+       aes(x = timepoint, y = corr_abundance, fill = experiment)) +
+  geom_col(
+    position = position_dodge(width = 0.9)  
+  ) + 
+  geom_errorbar(
+    aes(
+      ymin = corr_abundance - corr_abundance_error,
+      ymax = corr_abundance + corr_abundance_error,
+      group = experiment
+    ),
+    position = position_dodge(.9),
+    width = .5,
+    linewidth = .25
+  ) +
+  scale_fill_manual(values = color_mapping_experiment, 
+                    breaks = names(color_mapping_experiment)) +
+  facet_wrap(~glycoform1, 
+             scales = "free_y",
+             nrow = 2)
+
+ggsave(filename =  paste0("figures/corrected_frac_ab_barplot_over_time",which_experiment,".png"),
+       height = 100,
+       width = 250,
+       units = "mm",
+       dpi = 600)
+}
+
+plot_over_time(corr_abundance_data, which_experiment = c("E20"))
 # # prepare data for differential analysis ----------------------------------
 # 
 # data.matrix <- corr_abundance_data %>%
