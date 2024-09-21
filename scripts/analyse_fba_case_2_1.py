@@ -42,10 +42,10 @@ current_wd = os.getcwd()
 # %% load cho model
 
 models = {
-    "iCHO1766": "iCHOv1_final.xml",
+    # "iCHO1766": "iCHOv1_final.xml",
     # "iCHO2441": "iCHO2441.xml",
     # "CHO-K1": "iCHOv1_K1_final.xml",
-    # "CHOmpact": "CHOsmallmodel.json"
+    "CHOmpact": "CHOsmallmodel.json"
     # "CHOmpact_small": "CHOsmallmodel_activity4.json"
     # "K1par-0mMCD": "iCHO_K1par-0mMCD.xml"
     }
@@ -100,7 +100,7 @@ rates = pd.read_csv("data/aa_rates_reordered_data2_tshifted.csv")
 
 # Define the specific values to be removed
 # values_to_remove = ['Growth_rate', 'Titer']  # Replace these with the actual values you want to remove
-values_to_remove = ['Growth_rate'] 
+values_to_remove = ['Growth_rate', 'Titer'] 
 # Remove rows where 'aa_rates' column contains any of the specified values
 # rates_filtered = rates[~rates['AA_meta'].isin(values_to_remove)]
 
@@ -108,34 +108,60 @@ values_to_remove = ['Growth_rate']
 rates.drop(rates[rates['AA_meta'].isin(values_to_remove)].index, inplace=True)
 
 # %% check all names of reactions for which you want to set the bounds
-
+#iCHO1766
+# uptake_names = {
+#     "Ala": "EX_ala_L_e_",
+#     "NH3": "EX_nh4_e_",
+#     "Arg": "EX_arg_L_e_",
+#     "Asn": "EX_asn_L_e_",
+#     "Asp": "EX_asp_L_e_",
+#     #"Cysteine": "EX_cys_L_e_",
+#     "GLC": "EX_glc_e_",
+#     "Glu": "EX_glu_L_e_",
+#     "Gln": "EX_gln_L_e_",
+#     "Gly": "EX_gly_e_",
+#     "His": "EX_his_L_e_",
+#     "Ile": "EX_ile_L_e_",
+#     "LAC": "EX_lac_L_e_",
+#     "Leu": "EX_leu_L_e_",
+#     "Lys": "EX_lys_L_e_",
+#     "Met": "EX_met_L_e_",
+#     "Phe": "EX_phe_L_e_",
+#     "Pro": "EX_pro_L_e_",
+#     "Ser": "EX_ser_L_e_",
+#     "Thr": "EX_thr_L_e_",
+#     "Trp": "EX_trp_L_e_",
+#     "Tyr": "EX_tyr_L_e_",
+#     "Val": "EX_val_L_e_",
+#     "Titer": "DM_igg_g_"
+# }
+#CHOmpact
 uptake_names = {
-    "Ala": "EX_ala_L_e_",
-    "NH3": "EX_nh4_e_",
-    "Arg": "EX_arg_L_e_",
-    "Asn": "EX_asn_L_e_",
-    "Asp": "EX_asp_L_e_",
+    "Ala": "F110",
+    "NH3": "F108",
+    "Arg": "F111",
+    "Asn": "F112",
+    "Asp": "F113",
     #"Cysteine": "EX_cys_L_e_",
-    "GLC": "EX_glc_e_",
-    "Glu": "EX_glu_L_e_",
-    "Gln": "EX_gln_L_e_",
-    "Gly": "EX_gly_e_",
-    "His": "EX_his_L_e_",
-    "Ile": "EX_ile_L_e_",
-    "LAC": "EX_lac_L_e_",
-    "Leu": "EX_leu_L_e_",
-    "Lys": "EX_lys_L_e_",
-    "Met": "EX_met_L_e_",
-    "Phe": "EX_phe_L_e_",
-    "Pro": "EX_pro_L_e_",
-    "Ser": "EX_ser_L_e_",
-    "Thr": "EX_thr_L_e_",
-    "Trp": "EX_trp_L_e_",
-    "Tyr": "EX_tyr_L_e_",
-    "Val": "EX_val_L_e_",
-    "Titer": "DM_igg_g_"
+    "GLC": "F105",
+    "Glu": "F115",
+    "Gln": "F114",
+    "Gly": "F116",
+    "His": "F117",
+    "Ile": "F118",
+    "LAC": "F107",
+    "Leu": "F119",
+    "Lys": "F120",
+    "Met": "F121",
+    "Phe": "F122",
+    "Pro": "F123",
+    "Ser": "F124",
+    "Thr": "F125",
+    "Trp": "F126",
+    "Tyr": "F127",
+    "Val": "F128",
+    "Titer": "F143"
 }
-
 taken_up = [
     "EX_gln_L_e_",
     "EX_cys_L_e_",
@@ -171,20 +197,62 @@ for ex in model.reactions:
 # Turn off igg and epo production
 # model.reactions.DM_igg_g_.lower_bound = 0
 # model.reactions.DM_igg_g_.upper_bound = 0
-model.reactions.DM_epo_g_.lower_bound = 0
-model.reactions.DM_epo_g_.upper_bound = 0
+# model.reactions.DM_epo_g_.lower_bound = 0
+# model.reactions.DM_epo_g_.upper_bound = 0
 
 
 # Set the objective function
 #if strain in producers:
-model.objective = "biomass_cho_producing" #index 6618
-model.reactions.biomass_cho.upper_bound = 0
-model.reactions.biomass_cho.lower_bound = 0
+# model.objective = "biomass_cho_producing" #index 6618
+
+
+# model.reactions.biomass_cho.upper_bound = 0
+# model.reactions.biomass_cho.lower_bound = 0
 #else:
 # model.objective = "biomass_cho" #index 6627
 # model.reactions.biomass_cho_producing.upper_bound = 0
 # model.reactions.biomass_cho_producing.lower_bound = 0
 
+# Specific for CHOmpact
+model.objective = "F90" #index 6618
+
+model.reactions.F129.lower_bound = 0.6*0.9
+model.reactions.F129.upper_bound = 0.6*1.1
+model.reactions.F130.lower_bound = 0.05*0.9
+model.reactions.F130.upper_bound = 0.05*1.1
+model.reactions.F131.lower_bound = 0.11*0.9
+model.reactions.F131.upper_bound = 0.11*1.1
+model.reactions.F132.lower_bound = 0.45*0.9
+model.reactions.F132.upper_bound = 0.45*1.1
+model.reactions.F133.lower_bound = 0.46*0.9
+model.reactions.F133.upper_bound = 0.46*1.1
+model.reactions.F134.lower_bound = 1.28*0.9
+model.reactions.F134.upper_bound = 1.28*1.1
+model.reactions.F135.lower_bound = 0.02*0.9
+model.reactions.F135.upper_bound = 0.02*1.1
+model.reactions.F136.lower_bound = 3.41*0.9
+model.reactions.F136.upper_bound = 3.41*1.1
+model.reactions.F137.lower_bound = 0.84*0.9
+model.reactions.F137.upper_bound = 0.84*1.1
+model.reactions.F138.lower_bound = 4.1*0.9
+model.reactions.F138.upper_bound = 4.1*1.1
+model.reactions.F139.lower_bound = 0.19*0.9
+model.reactions.F139.upper_bound = 0.19*1.1
+model.reactions.F140.lower_bound = 0.09*0.9
+model.reactions.F140.upper_bound = 0.09*1.1
+# data from the compact paper SUpplementary Data for additional reaction constrains
+# F_129	0.6	0.6	0.6	0.46	0.46
+# F_130	0.05	0.05	0.05	0.02	0.02
+# F_131	0.11	0.11	0.11	0.04	0.04
+# F_132	0.45	0.45	0.45	0.24	0.24
+# F_133	0.46	0.46	0.46	0.46	0.46
+# F_134	1.28	1.28	1.28	1.56	1.56
+# F_135	0.02	0.02	0.02	2.08	2.08
+# F_136	3.41	3.41	3.41	1.84	1.84
+# F_137	0.84	0.84	0.84	0.41	0.41
+# F_138	4.1	4.1	4.1	5.14	5.14
+# F_139	0.19	0.19	0.19	0.22	0.22
+# F_140	0.09	0.09	0.09	0.08	0.08
 
 
 # %%
@@ -242,7 +310,7 @@ model.reactions.biomass_cho.lower_bound = 0
 
 # %%
 startTime = datetime.now()
-N = 10
+N = 100
 
 # Initialize dictionaries
 mus = {}
@@ -264,13 +332,13 @@ for ex in experiments:
 for ex in experiments:
     # Iterate over each window within the current experiment
     for w in windows:
-        # Reset default bounds on all reactions for each experiment and window
-        for reaction in model.reactions:
-            reaction.upper_bound = 1000
-            if reaction.reversibility or reaction.id in taken_up:
-                reaction.lower_bound = -1000
-            else:
-                reaction.lower_bound = 0
+        # # Reset default bounds on all reactions for each experiment and window
+        # for reaction in model.reactions:
+        #     reaction.upper_bound = 1000
+        #     if reaction.reversibility or reaction.id in taken_up:
+        #         reaction.lower_bound = -1000
+        #     else:
+        #         reaction.lower_bound = 0
 
         # Select data for the current experiment and window
         one_set = rates[(rates.Experiment == ex) & (rates.Window == w)]
