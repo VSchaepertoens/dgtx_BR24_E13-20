@@ -94,6 +94,50 @@ write_csv(x = corr_abundance_data,
           file = "analysis/corr_abundance_data_4tp.csv")
 WriteXLS(x = corr_abundance_data,
          ExcelFileName = "analysis/corr_abundance_data_4tp.xls")
+
+
+# prepare data for differential analysis --------------------------------------------------
+data.matrix <- corr_abundance_data %>%
+  select(glycoform1, corr_abundance, experiment_tp) %>%
+  pivot_wider(values_from = corr_abundance,
+              names_from = experiment_tp) %>%
+  column_to_rownames('glycoform1') %>%
+  as.matrix() 
+
+# Set all negative values to 0
+data.matrix[data.matrix < 0] <- 0
+
+# Apply log2 transformation (adding 1 to avoid log2(0))
+log2_data.matrix <- log2(t(data.matrix + 1))
+
+#Perform log2 transformation
+log2_data.matrix <- t(as.matrix(log2_data.matrix))
+
+log2_data.matrix
+
+meta <- tibble(sample_name = colnames(data.matrix)) %>%
+  separate(col = sample_name,
+           into = c('experiment', 'timepoint'),
+           sep = "_",
+           remove = FALSE
+  ) %>%
+  mutate(condition = case_when(
+    experiment %in% c('E13', 'E15', 'E17', 'E19') ~ 'constant',
+    experiment %in% c('E14', 'E16', 'E18', 'E20') ~ 'tshifted',
+    TRUE ~ 'other'  # This handles any other experiments, if applicable
+  ))
+
+save(log2_data.matrix, data.matrix, meta, file = "analysis/e13_e20_nglycans.RData")
+
+data.matrix_tosave <- data.matrix %>% 
+  as.data.frame() %>%
+  mutate(modcom = rownames(data.matrix)) 
+
+write_csv(data.matrix_tosave, 
+          file = "analysis/corr_abundance_data_matrix.csv")
+WriteXLS(x = data.matrix_tosave,
+         ExcelFileName = "analysis/corr_abundance_data_matrix.xls")
+
 # plot char runs data -----------------------------------------------------
 # Define the colors
 # color_mapping_experiment <- c(
