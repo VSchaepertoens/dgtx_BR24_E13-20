@@ -190,8 +190,8 @@ plot_bars <- function(data,
                        limits = c(0,65)) +
     xlab("") +
     theme_bw() +
-    theme(text = element_text(size = 10, 
-                              face = "plain",
+    theme(text = element_text(size = 16, 
+                              face = "bold",
                               family = "sans"),
           axis.text.x = element_text(angle = 90, 
                                      vjust = .5, 
@@ -211,7 +211,7 @@ plot_bars(corr_abundance_data,
           title = "Fractional abundance of glycans in all experiments",
           row_number = 2)
 
-ggsave(filename = "figures/corrected_frac_ab_barplot_all_experiments.png",
+ggsave(filename = "figures/corrected_frac_ab_barplot_all_experiments_bold16.png",
        height = 200,
        width = 250,
        units = "mm",
