@@ -54,7 +54,8 @@ color_mapping_experiment <- c(
 
 plot_bars <- function(data,
                       title = "Fractional abundance",
-                      row_number = 1) {
+                      row_number = 1,
+                      legend_row_number = 1) {
   
   ggplot(data, aes(x = modcom_name, y = frac_abundance)) +
     
@@ -80,7 +81,7 @@ plot_bars <- function(data,
     ) +
     
     # Customize legend
-    guides(fill = guide_legend(nrow = row_number)) +
+    guides(fill = guide_legend(nrow = legend_row_number)) +
     
     # Facet by timepoint
     facet_wrap(~ timepoint, nrow = row_number) +
@@ -96,10 +97,10 @@ plot_bars <- function(data,
     xlab("") +
     theme_bw() +
     theme(
-      text = element_text(size = 10, face = "plain", family = "sans"),
+      text = element_text(size = 10, face = "bold", family = "sans"),
       axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
       axis.text = element_text(colour = "black"),
-      legend.position = "bottom",
+      # legend.position = "bottom",
       legend.text = element_text(size = 10),
       panel.border = element_blank()
     ) +
@@ -112,10 +113,11 @@ plot_bars <- function(data,
 
 plot_bars(merged_data %>%
             filter(experiment %in% c("E20") & timepoint %in% c("120", "216", "288", "336")), 
-          row_number = 1)
+          row_number = 1,
+          legend_row_number = 2)
 
-ggsave(filename = "figures/cafog_comparison_e20.png",
-       height = 100,
-       width = 250,
-       units = "mm",
+ggsave(filename = "figures/cafog_comparison_e20_6times30.png",
+       height = 6,
+       width = 30,
+       units = "cm",
        dpi = 600)
