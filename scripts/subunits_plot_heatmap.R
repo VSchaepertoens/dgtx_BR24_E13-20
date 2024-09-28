@@ -51,30 +51,40 @@ data$subunit <- factor(data$subunit, levels = c('Intact', 'LC2', 'LC'))
 
 # plot stacked bar chart -------------------------------------------------
 plot_subunits <-  function(data_to_plot,
-                           experiment = "E" #default to plot all experimnets
+                           experiment = "E", #default to plot all experimnets
+                           plot_condition = FALSE
                            ){
   
   data_to_plot <-  data_to_plot %>% filter(str_detect(Sample, experiment))
   
-  ggplot(data_to_plot, aes(y = Sample, x = peak_area, fill = subunit)) + 
-  geom_bar(stat = "identity", position = "fill", width = .7) +
-  xlab("peak_area (%)") +
-  ylab("CHO cell experiment") +
-  scale_fill_brewer(palette = "Accent") +
-  scale_y_discrete(limits = rev) +
-  theme(text = element_text(size = 9, 
-                            # face = "bold", 
-                            family = "sans"),
-        axis.text = element_text(colour = "black"),
-        panel.background = element_blank(),
-        axis.text.y = element_text(margin = margin(r = 0)),
-        axis.ticks.y = element_blank(),
-        legend.title = element_blank(),
-        legend.position = "bottom",
-        panel.border = element_blank(),
-        panel.grid.major.y = element_blank(),
-        panel.grid.minor = element_blank(),
-  )
+  p <- ggplot(data_to_plot, aes(y = Sample, x = peak_area, fill = subunit)) + 
+      geom_bar(stat = "identity", position = "fill", width = .7) +
+      xlab("peak_area (%)") +
+      ylab("CHO cell experiment") +
+      scale_fill_brewer(palette = "Accent") +
+      scale_y_discrete(limits = rev) +
+
+      theme(text = element_text(size = 16, 
+                                face = "bold",
+                                family = "sans"),
+            axis.text = element_text(colour = "black"),
+            panel.background = element_blank(),
+            axis.text.y = element_text(margin = margin(r = 0)),
+            axis.ticks.y = element_blank(),
+            legend.title = element_blank(),
+            legend.position = "bottom",
+            panel.border = element_blank(),
+            panel.grid.major.y = element_blank(),
+            panel.grid.minor = element_blank(),
+      )
+  
+  # Conditionally add the facet
+  if (plot_condition) {
+    p <- p + facet_wrap(~ condition)
+  }
+  # Return the plot
+  return(p)
+  
 }
 
 plot_subunits(data_to_plot = data)
@@ -172,13 +182,32 @@ ggsave("figures/subunit_quantification_216.png",
        units = c("cm"),
        dpi = 600)
 
-plot_subunits(data_to_plot = data,
-              experiment = "")
-ggsave("figures/subunit_quantification_216.png",        
-       width = 8.89,
-       height = 8.89,
+
+selected_data <- data %>%
+  filter(Sample %in% c("E13_120","E13_216", "E13_288", "E13_336",
+                       "E14_120","E14_216", "E14_288", "E14_336",
+                       "E19_120","E19_216", "E19_288", "E19_336",
+                       "E20_120","E20_216", "E20_288", "E20_336")) %>%
+  mutate(Sample = factor(Sample,
+                         levels = c("E13_120","E19_120","E14_120", "E20_120",  
+                                    "E13_216","E19_216","E14_216", "E20_216", 
+                                    "E13_288","E19_288","E14_288", "E20_288",
+                                    "E13_336","E19_336","E14_336", "E20_336"))) %>%
+  mutate(condition = case_when(
+    Sample %in% c("E13_120","E13_216", "E13_288", "E13_336","E19_120","E19_216", "E19_288", "E19_336") ~ 'constant',
+    Sample %in% c("E14_120","E14_216", "E14_288", "E14_336","E20_120","E20_216", "E20_288", "E20_336") ~ 'tshifted',
+    TRUE ~ 'other'  # This handles any other experiments, if applicable
+  ))
+
+plot_subunits(data_to_plot = selected_data,
+              plot_condition = FALSE)
+ggsave("figures/subunit_quantification_4tp_4exp_tp_ordered.png",        
+       width = 15,
+       height = 15,
        units = c("cm"),
        dpi = 600)
+
+
 
 
 # #plot stacked barchart with labels
