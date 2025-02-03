@@ -42,8 +42,8 @@ current_wd = os.getcwd()
 # %% load cho model
 
 models = {
-    # "iCHO1766": "iCHOv1_final.xml",
-    "iCHO2441": "iCHO2441.xml",
+    "iCHO1766": "iCHOv1_final.xml",
+    # "iCHO2441": "iCHO2441.xml",
     # "CHO-K1": "iCHOv1_K1_final.xml",
     # "CHOmpact": "CHOsmallmodel.json"
     # "CHOmpact_small": "CHOsmallmodel_activity4.json"
