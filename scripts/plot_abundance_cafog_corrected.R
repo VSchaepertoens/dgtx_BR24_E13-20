@@ -97,6 +97,10 @@ WriteXLS(x = corr_abundance_data,
 
 
 # prepare data for differential analysis --------------------------------------------------
+# data.matrix <- readxl::read_excel("data/data_matrix_TR.xlsx") %>%
+#   column_to_rownames('...1') %>%
+#   as.matrix() 
+  
 data.matrix <- corr_abundance_data %>%
   select(glycoform1, corr_abundance, experiment_tp) %>%
   pivot_wider(values_from = corr_abundance,
@@ -127,7 +131,9 @@ meta <- tibble(sample_name = colnames(data.matrix)) %>%
     TRUE ~ 'other'  # This handles any other experiments, if applicable
   ))
 
-save(log2_data.matrix, data.matrix, meta, file = "analysis/e13_e20_nglycans.RData")
+save(log2_data.matrix, data.matrix, meta, file = "analysis/e13_e20_nglycans_TR.RData")
+# log2_data.matrix_TR <- log2_data.matrix
+# data.matrix_TR <- data.matrix
 
 data.matrix_tosave <- data.matrix %>% 
   as.data.frame() %>%
