@@ -241,6 +241,8 @@ ggsave(filename = "figures/titer_rates_case2_2.png",
        units = "mm",
        dpi = 600)
 
+
+
  
 # Transformation to wider table for dot plots -----------------------------
 # m_growth_rates_nottshift <- m_growth_rates_nottshift %>% 
@@ -317,13 +319,14 @@ ggplot(mp_growth_rates_joined %>% filter(Window %in% c("1", "2", "3")), aes(x = 
   scale_color_manual(values = color_mapping_experiment) +
   scale_y_continuous(limits = c(-0.005, 0.04)) +
   scale_x_continuous(limits = c(-0.005, 0.04)) +
+  coord_fixed() +
   labs(x = "Measured (Experimental) Rates", 
        y = "Predicted Rates", 
        title = "iCHO1766 Predicted vs Measured Rates") +
   facet_wrap(~Window, nrow = 1) 
 
  
-ggsave(filename = "figures/fba/dotplots_growth_rates_case2_1_icho1766_window1_2_3.png",
+ggsave(filename = "figures/fba/dotplots_growth_rates_case2_1_icho1766_window1_2_3_axes_fixed.png",
        height = 100,
        width = 200,
        units = "mm",
@@ -353,13 +356,14 @@ ggplot(mp_growth_rates_joined %>% filter(Window %in% c("1", "2", "3")), aes(x = 
   scale_color_manual(values = color_mapping_experiment) +
   scale_y_continuous(limits = c(-0.005, 0.04)) +
   scale_x_continuous(limits = c(-0.005, 0.04)) +
+  coord_fixed() +
   labs(x = "Measured (Experimental) Rates", 
        y = "Predicted Rates", 
        title = "iCHO2441 Predicted vs Measured Rates") +
   facet_wrap(~Window, nrow = 1)
 
 
-ggsave(filename = "figures/fba/dotplots_growth_rates_case2_1_icho2441_window1_2_3.png",
+ggsave(filename = "figures/fba/dotplots_growth_rates_case2_1_icho2441_window1_2_3_coord_fixed.png",
        height = 100,
        width = 200,
        units = "mm",
@@ -389,13 +393,14 @@ ggplot(mp_titer_rates_joined %>% filter(Window %in% c("3", "4", "5")), aes(x = m
   scale_color_manual(values = color_mapping_experiment) +
   scale_y_continuous(limits = c(-0.2e-5, 3.5e-5), labels = function(x) x * 1e5) +
   scale_x_continuous(limits = c(-0.2e-5, 3.5e-5), labels = function(x) x * 1e5) +
+  coord_fixed() +
   labs(x = "Measured (Experimental) Rates", 
        y = "Predicted Rates", 
        title = "iCHO1766 Predicted vs Measured Rates") +
   facet_wrap(~Window, nrow = 1) 
 
 
-ggsave(filename = "figures/fba/dotplots_titer_rates_case2_1_icho1766_window3_4_5.png",
+ggsave(filename = "figures/fba/dotplots_titer_rates_case2_1_icho1766_window3_4_5_coord_fixed.png",
        height = 100,
        width = 200,
        units = "mm",
@@ -425,13 +430,14 @@ ggplot(mp_titer_rates_joined %>% filter(Window %in% c("3", "4", "5")), aes(x = m
   scale_color_manual(values = color_mapping_experiment) +
   scale_y_continuous(limits = c(-0.2e-5, 3.5e-5), labels = function(x) x * 1e5) +
   scale_x_continuous(limits = c(-0.2e-5, 3.5e-5), labels = function(x) x * 1e5) +
+  coord_fixed() +
   labs(x = "Measured (Experimental) Rates", 
        y = "Predicted Rates", 
        title = "iCHO2441 Predicted vs Measured Rates") +
   facet_wrap(~Window, nrow = 1) 
 
 
-ggsave(filename = "figures/fba/dotplots_titer_rates_case2_1_icho2441_window3_4_5.png",
+ggsave(filename = "figures/fba/dotplots_titer_rates_case2_1_icho2441_window3_4_5_coord_fixed.png",
        height = 100,
        width = 200,
        units = "mm",
