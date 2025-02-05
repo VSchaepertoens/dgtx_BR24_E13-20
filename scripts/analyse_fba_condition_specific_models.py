@@ -82,7 +82,8 @@ print(filtered_rates)
 rates = filtered_rates
 
 # %% check all names of reactions for which you want to set the bounds
-taken_up = [
+# iCHO1766
+ taken_up = [
     "EX_gln_L_e_",
     "EX_cys_L_e_",
     "EX_arg_L_e_",
@@ -157,10 +158,6 @@ for ex in experiments:
         reaction_data_fba[ex][w] = {} # A single dictionary for reactions
         reaction_data_pfba[ex][w] = {} # A single dictionary for reactions
 
-# # Iterate over each experiment
-# for ex in experiments:
-#     # Iterate over each window within the current experiment
-#     for w in windows:
         # Reset default bounds on all reactions for each experiment and window
         for reaction in model.reactions:
             reaction.upper_bound = 1000
@@ -172,8 +169,6 @@ for ex in experiments:
         # Select data for the current experiment and window
         one_set = rates[(rates.Experiment == ex) & (rates.Window == w)]
 
-        # print(f"Experiment: {ex}, Window: {w}")
-
         # switching off epo production and cho_biomass (for non-producers)
         model.reactions.DM_epo_g_.lower_bound = 0
         model.reactions.DM_epo_g_.upper_bound = 0
@@ -181,11 +176,6 @@ for ex in experiments:
         model.reactions.biomass_cho.lower_bound = 0
 
         print(f"Processing Experiment {ex}, Window {w}")
-
-        # # Iterate N times for this experiment and window combination
-        # n = 0
-        # while n < N:
-        #     print(f"Iteration {n} for Experiment {ex} and Window {w}")
 
         # Perform FBA and pFBA within a context (to avoid modifying the model permanently)
         with model:
@@ -241,14 +231,13 @@ for ex in experiments:
                         reaction_data_pfba[ex][w][reaction.id]['flux'] = reaction.flux
 
                 except cobra.exceptions.Infeasible:
-                    print(f"Infeasible solution encountered for Experiment {ex} and Window {w}. Skipping to next iteration.")
+                    print(f"Infeasible solution encountered for Experiment {ex} and Window {w}. Skipping to next experiment_window.")
                     continue
 
 # Print script runtime
 print("Runtime:", datetime.now() - startTime)
 
-
-# # %% Escher
+# %% Escher
 # # save sbml model to json format
 # cobra.io.save_json_model(model, "cho_gems/iCHO1766_E13_w1.json")
 #
@@ -306,12 +295,9 @@ print("Saved FBA and pFBA reaction data to CSV.")
 # %%
 # FVA analysis
 startTime = datetime.now()
-# N = 1 # only one repetition
-
 # Initialize dictionaries
 mus = {}
 reaction_data = {}
-# fva_results_dict = {}  # To store LB, UB, and flux for all reactions
 
 # Get unique sets of Experiments and Windows
 experiments = set(rates.Experiment)
@@ -325,7 +311,6 @@ for ex in experiments:
 
     for w in windows:
         mus[ex][w] = None
-        # fva_results_dict[ex][w] = {}# Initialize a list to store FVA results for each iteration
         reaction_data[ex][w] = {} # Initialize a list of empty dictionaries for each iteration
 
 # Iterate over each experiment
@@ -351,10 +336,6 @@ for ex in experiments:
         model.reactions.biomass_cho.upper_bound = 0
         model.reactions.biomass_cho.lower_bound = 0
 
-        # # Iterate N times for this experiment and window combination
-        # n = 0
-        # while n < N:
-        #     print(f"Iteration {n} for Experiment {ex} and Window {w}")
         with model:
                 # Initialize dictionary for storing bounds and fluxes for all reactions
                 for reaction in model.reactions:
@@ -365,17 +346,13 @@ for ex in experiments:
                     }
 
                 # Apply uptake and secretion rates for the current strain
-                for idx, row in one_set.iterrows():
+                for _, row in one_set.iterrows():
                     uptake = row.AA_meta
                     qp = row.Rate
                     err = row.SD
                     ID = uptake_names[uptake]
                     r = model.reactions.get_by_id(ID)
-
-                    picked1 = qp + err
-                    picked2 = qp - err
-                    picked = sorted([picked1, picked2])
-
+                    picked = sorted([qp - err, qp + err])
                     # Set bounds for the reaction
                     r.bounds = (picked[0], picked[1])
 
@@ -383,25 +360,26 @@ for ex in experiments:
                     reaction_data[ex][w][ID]['LB'] = picked[0]
                     reaction_data[ex][w][ID]['UB'] = picked[1]
 
-                # try:
                     # Perform Flux Balance Analysis (FBA)
                     FBA = model.optimize()
-                    # Store the FBA objective value in the mus dictionary
-                    mus[ex][w] = FBA.objective_value
-                    # After optimization, collect all FBA fluxes for each reaction
-                    for reaction in model.reactions:
-                        reaction_data[ex][w][reaction.id] = {
-                            'LB': reaction.lower_bound,
-                            'UB': reaction.upper_bound,
-                            'flux': reaction.flux,  # FBA flux value
-                            'FVA_min': None,  # Placeholder for FVA minimum flux
-                            'FVA_max': None  # Placeholder for FVA maximum flux
-                        }
+                    if FBA.status == 'optimal':
+                        mus[ex][w] = FBA.objective_value
+                        for reaction in model.reactions:
+                            reaction_data[ex][w][reaction.id] = {
+                                'LB': reaction.lower_bound,
+                                'UB': reaction.upper_bound,
+                                'flux': reaction.flux,  # FBA flux value
+                                'FVA_min': None,  # Placeholder for FVA minimum flux
+                                'FVA_max': None  # Placeholder for FVA maximum flux
+                            }
+                    else:
+                        print(f"FBA infeasible for Experiment {ex}, Window {w}. Skipping FVA.")
+                        continue
 
                 # Perform FVA
                 try:
-                    startTime_fva = datetime.now()
                     print(f"Processing FVA for Experiment {ex}, Window {w}")
+                    fva_startTime = datetime.now()
                     fva_results = cobra.flux_analysis.flux_variability_analysis(model, fraction_of_optimum=1.0)
 
                     # Integrate FVA results directly into reaction_data
@@ -412,17 +390,14 @@ for ex in experiments:
                         else:
                             print(f"Reaction ID {reaction_id} in FVA results not found in reaction_data.")
 
-                    # Optionally, store raw FVA results for debugging or further analysis
-                    # fva_results_dict[ex][w] = fva_results
-
                     print(f"FVA completed for Experiment {ex}, Window {w}")
-                    print("Runtime_FVA:", datetime.now() - startTime_fva)
+                    print("Runtime_FVA:", datetime.now() - fva_startTime)
 
                 except Exception as e:
                     print(f"Error during FVA for Experiment {ex}, Window {w}: {e}")
 
 # Print script runtime
-print("Runtime:", datetime.now() - startTime)
+print("Total runtime:", datetime.now() - startTime)
 
 # %%
 # Convert mus dictionary (FBA and objective values) to a pandas DataFrame
