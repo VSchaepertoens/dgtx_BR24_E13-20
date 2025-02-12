@@ -1,6 +1,9 @@
 library(tidyverse)
 library(fs)
 library(readxl)
+# Load necessary libraries
+library(dplyr)
+library(ggplot2)
 
 
 # load FVA data and combine into a single df ------------------------------
@@ -47,12 +50,12 @@ combined_fva_data <- bind_rows(fva_data_list) %>%
 
 # load FBA data -----------------------------------------------------------
 
-fba_data <- read_csv("fba_results/condition_specific/iCHO1766_biomass_producing/reaction_data_results_icho1766_FBA.csv")
+fba_data <- read_csv("fba_results/condition_specific/iCHO1766_biomass_producing/reaction_data_results_icho1766_FBA_pFBA.csv")
 
 
 # load pFBA data ----------------------------------------------------------
 
-pfba_data <- read_csv("fba_results/condition_specific/iCHO1766_biomass_producing/reaction_data_results_icho1766_pFBA.csv")
+# pfba_data <- read_csv("fba_results/condition_specific/iCHO1766_biomass_producing/reaction_data_results_icho1766_pFBA.csv")
 
 # join fva, fba and pFBA into one df
 
@@ -72,14 +75,14 @@ filt_fba_data <- fba_data %>%
   filter(
          Reaction %in% glycolysis_rxn)
 
-filt_pfba_data <- pfba_data %>%
-  filter(
-    Reaction %in% glycolysis_rxn) %>%
-  select(Experiment, Window, Reaction, Flux) %>%
-  rename("pfba_flux" = "Flux")
-
-joined_fva_fba <- left_join(x = filt_fba_data, y = filt_fva_data, by = c("Experiment", "Reaction", "Window"))
-joined_fva_fba_pfba <- left_join(x = joined_fva_fba, y = filt_pfba_data, by = c("Experiment", "Reaction", "Window"))
+# filt_pfba_data <- pfba_data %>%
+#   filter(
+#     Reaction %in% glycolysis_rxn) %>%
+#   select(Experiment, Window, Reaction, Flux) %>%
+#   rename("pfba_flux" = "Flux")
+# 
+# joined_fva_fba <- left_join(x = filt_fba_data, y = filt_fva_data, by = c("Experiment", "Reaction", "Window"))
+# joined_fva_fba_pfba <- left_join(x = joined_fva_fba, y = filt_pfba_data, by = c("Experiment", "Reaction", "Window"))
 
 
 color_mapping_experiment <- c(
@@ -102,10 +105,11 @@ ggplot(joined_fva_fba_pfba, aes(x = Reaction, y = Flux, color = Experiment)) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90))
 
-ggplot(joined_fva_fba_pfba, aes(x = Reaction)) +
-  geom_point(aes(y = Flux), color = "blue") +
-  geom_point(aes(y = pfba_flux), color = "red") +
+ggplot(filt_fba_data, aes(x = Reaction)) +
+  geom_point(aes(y = FBA_Flux), color = "blue") +
+  geom_point(aes(y = pFBA_Flux), color = "red") +
   facet_grid(Experiment ~ Window) +
+  # ylim( -0.1, 0.5) +
   # facet_wrap(~ Window, ncol = 5) +
   # scale_color_manual(values = color_mapping_experiment) +
   theme_bw() +
@@ -113,22 +117,17 @@ ggplot(joined_fva_fba_pfba, aes(x = Reaction)) +
 
 
 
-# PCA ---------------------------------------------------------------------
-
-# Load necessary libraries
-library(dplyr)
-library(ggplot2)
-
+# PCA --------------------------------------------------------------------
 # Assuming your data is in a dataframe called 'df'
 # df should have columns: Experiment, Window, Reaction, Flux
 
 # Step 1: Reshape the data to wide format
 # Each reaction will be a column, and each row will be a unique combination of Experiment and Window
 df_wide <- fba_data %>%
-  select(Experiment, Window, Reaction, Flux) %>%
+  select(Experiment, Window, Reaction, FBA_Flux) %>%
   # Aggregate duplicates (if any)
   group_by(Experiment, Window, Reaction) %>%
-  summarize(Flux = mean(Flux, na.rm = TRUE), .groups = 'drop') %>%
+  summarize(Flux = mean(FBA_Flux, na.rm = TRUE), .groups = 'drop') %>%
   # Ensure all combinations are present
   complete(Experiment, Window, Reaction, fill = list(Flux = 0)) %>%
   # Pivot to wide format
@@ -142,11 +141,11 @@ df_wide <- fba_data %>%
 df_wide <- df_wide %>%
   select(where(~ any(. != 0)))  # Keep only columns with at least one non-zero value
 
-# Step 2: Perform PCA
-# Remove non-numeric columns (Experiment and Window) before PCA
-pca_result <- prcomp(df_wide %>% select(-Experiment, -Window), scale. = TRUE)
+# Perform PCA
+pca_result <- prcomp(x = df_wide %>% select(-Experiment, -Window),
+                     scale. = TRUE)
 
-# Step 3: Extract PCA scores
+#  Extract PCA scores
 pca_scores <- as.data.frame(pca_result$x)
 pca_scores$experiment_window <- rownames(df_wide)
 pca_scores$Experiment <- df_wide$Experiment
@@ -164,6 +163,8 @@ variance_summary <- data.frame(
 # Display the variance explained by PC1 and PC2
 cat("Variance explained by PC1:", round(variance_summary$Variance_Explained[1], 2), "%\n")
 cat("Variance explained by PC2:", round(variance_summary$Variance_Explained[2], 2), "%\n")
+cat("Variance explained by PC3:", round(variance_summary$Variance_Explained[3], 2), "%\n")
+cat("Variance explained by PC4:", round(variance_summary$Variance_Explained[4], 2), "%\n")
 
 # Step 4: Visualize the PCA results
 # Plot PCA with color by Experiment
@@ -183,14 +184,28 @@ ggplot(pca_scores, aes(x = PC1, y = PC2, color = as.factor(Window))) +
        y = "Principal Component 2",
        color = "Window")
 
+# # Plot PCA with color by experiment_window
+# ggplot(pca_scores, aes(x = PC1, y = PC2, color = experiment_window)) +
+#   geom_point(size = 3) +
+#   theme_minimal() +
+#   labs(title = "PCA of Flux Data by Time Window",
+#        x = "Principal Component 1",
+#        y = "Principal Component 2",
+#        color = "Window")
 
+
+pca_per_window <- function(scores_from_pca,
+                           experimental_window = 1){
 # Filter PCA scores for Window 1
-pca_scores_window1 <- pca_scores %>% filter(Window == 1)
+pca_scores_window <- scores_from_pca %>% filter(Window == experimental_window)
 
 # Plot PCA for Window 1, colored by Experiment
-ggplot(pca_scores_window1, aes(x = PC1, y = PC2, color = Experiment)) +
+ggplot(pca_scores_window, aes(x = PC1, y = PC2, color = Experiment)) +
   geom_point(size = 3) +
+  scale_color_manual(values = color_mapping_experiment) +
   theme_minimal() +
-  labs(title = "PCA of Flux Data for Window 1",
+  labs(title = paste("PCA of Flux Data for Window ",experimental_window),
        x = "Principal Component 1",
        y = "Principal Component 2")
+}
+pca_per_window(pca_scores, 2)
