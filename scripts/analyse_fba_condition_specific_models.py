@@ -18,13 +18,15 @@ from datetime import datetime
 # pandas - Work with dataframes
 import pandas as pd
 # numpy - Working with arrays
-# import numpy as np
+import numpy as np
 # Matplotlib - For plotting figures
 # import matplotlib.pyplot as plt
 
 # Third-party library imports
 # cobrapy- Run FBA
 import cobra
+from cobra import flux_analysis
+
 
 # Local application/library-specific imports
 # escher plots
@@ -62,28 +64,28 @@ for model_name, model_file in models.items():
     print(f"Loaded {model_name} model successfully!")
 
 # %% create copy of model
-model = model_orig
+model = model_orig.copy()
 
 # %% load aa and metabolite data
 rates = pd.read_csv("data/aa_rates_reordered_data2.csv")
 
 # Define the specific values to be removed
 # values_to_remove = ['Growth_rate', 'Titer']  # Replace these with the actual values you want to remove
-values_to_remove = ['Growth_rate']
+values_to_remove = ['Titer']
 # Modify the existing DataFrame in place
 rates.drop(rates[rates['AA_meta'].isin(values_to_remove)].index, inplace=True)
 
-# Filter rows where Experiment == 'E13' and Window == 1
-filtered_rates = rates.loc[(rates['Experiment'] == 'E13') & (rates['Window'] == 1)]
-
-# Display the filtered DataFrame
-print(filtered_rates)
-
-rates = filtered_rates
+# # Filter rows where Experiment == 'E13' and Window == 1
+# filtered_rates = rates.loc[(rates['Experiment'] == 'E13') & (rates['Window'] == 1)]
+#
+# # Display the filtered DataFrame
+# print(filtered_rates)
+#
+# rates = filtered_rates
 
 # %% check all names of reactions for which you want to set the bounds
 # iCHO1766
- taken_up = [
+taken_up = [
     "EX_gln_L_e_",
     "EX_cys_L_e_",
     "EX_arg_L_e_",
@@ -110,21 +112,21 @@ rates = filtered_rates
     "EX_lnlc_e_",
     "EX_lnlnca_e_",
     "EX_Tyr_ggn_e_"
-]
+ ]
 #iCHO1766
 uptake_names = dict(Ala="EX_ala_L_e_", NH3="EX_nh4_e_", Arg="EX_arg_L_e_", Asn="EX_asn_L_e_", Asp="EX_asp_L_e_",
                     GLC="EX_glc_e_", Glu="EX_glu_L_e_", Gln="EX_gln_L_e_", Gly="EX_gly_e_", His="EX_his_L_e_",
                     Ile="EX_ile_L_e_", LAC="EX_lac_L_e_", Leu="EX_leu_L_e_", Lys="EX_lys_L_e_", Met="EX_met_L_e_",
                     Phe="EX_phe_L_e_", Pro="EX_pro_L_e_", Ser="EX_ser_L_e_", Thr="EX_thr_L_e_", Trp="EX_trp_L_e_",
-                    Tyr="EX_tyr_L_e_", Val="EX_val_L_e_", Titer="DM_igg_g_" )
+                    Tyr="EX_tyr_L_e_", Val="EX_val_L_e_", Growth_rate="biomass_cho_producing" )
 
 # Growth_rate="biomass_cho_producing"
 # Titer="DM_igg_g_"
 # print(f"Reaction {reaction.id} bounds set to: [{reaction.lower_bound}, {reaction.upper_bound}]")
 
 # Set the objective function
-model.objective = "biomass_cho_producing" #index 6618
-# model.objective = "DM_igg_g_" #index 6618
+# model.objective = "biomass_cho_producing" #index 6618
+model.objective = "DM_igg_g_" #index 6618
 
 # model.reactions.biomass_cho.upper_bound = 0
 # model.reactions.biomass_cho.lower_bound = 0
@@ -144,6 +146,7 @@ reaction_data_pfba = {}  # To store LB, UB, and flux for all reactions
 experiments = set(rates.Experiment)
 windows = set(rates.Window)
 
+
 # Initialize the mus and reaction_data dictionaries for experiments and windows
 for ex in experiments:
     mus_fba[ex] = {}
@@ -155,87 +158,91 @@ for ex in experiments:
         # Placeholders for single iteration data
         mus_fba[ex][w] = None
         mus_pfba[ex][w] = None
-        reaction_data_fba[ex][w] = {} # A single dictionary for reactions
-        reaction_data_pfba[ex][w] = {} # A single dictionary for reactions
-
-        # Reset default bounds on all reactions for each experiment and window
-        for reaction in model.reactions:
-            reaction.upper_bound = 1000
-            if reaction.reversibility or reaction.id in taken_up:
-                reaction.lower_bound = -1000
-            else:
-                reaction.lower_bound = 0
-
-        # Select data for the current experiment and window
-        one_set = rates[(rates.Experiment == ex) & (rates.Window == w)]
-
-        # switching off epo production and cho_biomass (for non-producers)
-        model.reactions.DM_epo_g_.lower_bound = 0
-        model.reactions.DM_epo_g_.upper_bound = 0
-        model.reactions.biomass_cho.upper_bound = 0
-        model.reactions.biomass_cho.lower_bound = 0
+        reaction_data_fba[ex][w] = {}  # A single dictionary for reactions
+        reaction_data_pfba[ex][w] = {}  # A single dictionary for reactions
 
         print(f"Processing Experiment {ex}, Window {w}")
 
         # Perform FBA and pFBA within a context (to avoid modifying the model permanently)
         with model:
-                # Initialize dictionary for storing bounds and fluxes for all reactions
+            # Reset default bounds on all reactions for each experiment and window
+            for reaction in model.reactions:
+                reaction.upper_bound = 1000
+                if reaction.reversibility or reaction.id in taken_up:
+                    reaction.lower_bound = -1000
+                else:
+                    reaction.lower_bound = 0
+
+            # Switching off epo production and cho_biomass (for non-producers)
+            model.reactions.DM_epo_g_.lower_bound = 0
+            model.reactions.DM_epo_g_.upper_bound = 0
+            model.reactions.biomass_cho.upper_bound = 0
+            model.reactions.biomass_cho.lower_bound = 0
+
+            # Initialize dictionary for storing bounds and fluxes for all reactions
+            for reaction in model.reactions:
+                reaction_data_fba[ex][w][reaction.id] = {
+                    'LB': reaction.lower_bound,
+                    'UB': reaction.upper_bound,
+                    'flux': None  # Placeholder for flux after optimization
+                }
+                reaction_data_pfba[ex][w][reaction.id] = {
+                    'LB': reaction.lower_bound,
+                    'UB': reaction.upper_bound,
+                    'flux': None  # Placeholder for flux after optimization
+                }
+
+            # Select data for the current experiment and window
+            one_set = rates[(rates.Experiment == ex) & (rates.Window == w)]
+
+            # Apply uptake and secretion rates for the current strain
+            for _, row in one_set.iterrows():
+                uptake = row.AA_meta
+                qp = row.Rate
+                err = row.SD
+                ID = uptake_names[uptake]
+                r = model.reactions.get_by_id(ID)
+                # print(f"Reaction {ID}: bounds = {r.bounds}")
+
+                picked1 = qp + err
+                picked2 = qp - err
+                picked = sorted([picked1, picked2])
+
+                # Set bounds for the reaction
+                r.bounds = (picked[0], picked[1])
+                # print(f"Reaction {ID}: bounds = {r.bounds}")
+
+                # Store the updated LB and UB in the reaction_data dictionary
+                reaction_data_fba[ex][w][ID]['LB'] = picked[0]
+                reaction_data_fba[ex][w][ID]['UB'] = picked[1]
+
+            try:
+                # Perform Flux Balance Analysis (FBA)
+                fba_solution = model.optimize()
+                print("FBA Results:", fba_solution.fluxes["DM_igg_g_"])
+
+                # Store the FBA objective value and fluxes
+                mus_fba[ex][w] = fba_solution.fluxes["DM_igg_g_"]
                 for reaction in model.reactions:
-                    reaction_data_fba[ex][w][reaction.id] = {
-                        'LB': reaction.lower_bound,
-                        'UB': reaction.upper_bound,
-                        'flux': None  # Placeholder for flux after optimization
-                    }
-                    reaction_data_pfba[ex][w][reaction.id] = {
-                        'LB': reaction.lower_bound,
-                        'UB': reaction.upper_bound,
-                        'flux': None  # Placeholder for flux after optimization
-                    }
+                    reaction_data_fba[ex][w][reaction.id]['flux'] = fba_solution.fluxes[reaction.id]
 
-                # Apply uptake and secretion rates for the current strain
-                for _, row in one_set.iterrows():
-                    uptake = row.AA_meta
-                    qp = row.Rate
-                    err = row.SD
-                    ID = uptake_names[uptake]
-                    r = model.reactions.get_by_id(ID)
+                # Perform parsimonious FBA (pFBA)
+                pfba_solution = flux_analysis.pfba(model, fraction_of_optimum=1.0)
+                print("pFBA Results:", pfba_solution.fluxes["DM_igg_g_"])
+                print("pFBA Objective value:", pfba_solution.objective_value)
 
-                    picked1 = qp + err
-                    picked2 = qp - err
-                    picked = sorted([picked1, picked2])
+                # Store the pFBA objective value in the mus dictionary
+                mus_pfba[ex][w] = pfba_solution.fluxes["DM_igg_g_"]
+                for reaction in model.reactions:
+                    reaction_data_pfba[ex][w][reaction.id]['flux'] = pfba_solution.fluxes[reaction.id]
 
-                    # Set bounds for the reaction
-                    r.bounds = (picked[0], picked[1])
-
-                    # Store the updated LB and UB in the reaction_data dictionary
-                    reaction_data_fba[ex][w][ID]['LB'] = picked[0]
-                    reaction_data_fba[ex][w][ID]['UB'] = picked[1]
-
-                try:
-                    # Perform Flux Balance Analysis (FBA)
-                    FBA = model.optimize()
-                    print("FBA Results:", FBA)
-
-                    # Store the FBA objective value and fluxes
-                    mus_fba[ex][w] = FBA.objective_value
-                    for reaction in model.reactions:
-                        reaction_data_fba[ex][w][reaction.id]['flux'] = reaction.flux
-
-                    # Perform parsimonious FBA (pFBA)
-                    pfba_solution = cobra.flux_analysis.pfba(model, fraction_of_optimum=1.0)
-                    print("pFBA Results:", pfba_solution)
-
-                    # Store the pFBA objective value in the mus dictionary
-                    mus_pfba[ex][w] = pfba_solution.objective_value
-                    for reaction in model.reactions:
-                        reaction_data_pfba[ex][w][reaction.id]['flux'] = reaction.flux
-
-                except cobra.exceptions.Infeasible:
-                    print(f"Infeasible solution encountered for Experiment {ex} and Window {w}. Skipping to next experiment_window.")
-                    continue
+            except cobra.exceptions.Infeasible:
+                print(f"Infeasible solution encountered for Experiment {ex} and Window {w}. Skipping to next experiment_window.")
+                continue
 
 # Print script runtime
-print("Runtime:", datetime.now() - startTime)
+print("Total runtime:", datetime.now() - startTime)
+
 
 # %% Escher
 # # save sbml model to json format
