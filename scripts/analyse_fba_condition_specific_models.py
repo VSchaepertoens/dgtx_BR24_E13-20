@@ -43,7 +43,8 @@ models = {
     "iCHO1766": "iCHOv1_final.xml",
     # "iCHO2441": "iCHO2441.xml",
     # "CHO-K1": "iCHOv1_K1_final.xml",
-    # "CHOmpact": "CHOsmallmodel.json"
+    # "CHOmpact": "CHOsmallmodel.json",
+    # "CHOmpact": "CHOmpact_generic_producing_Published.json"
     # "CHOmpact_small": "CHOsmallmodel_activity4.json"
     # "K1par-0mMCD": "iCHO_K1par-0mMCD.xml"
     }
@@ -113,7 +114,7 @@ taken_up = [
     "EX_lnlnca_e_",
     "EX_Tyr_ggn_e_"
  ]
-#iCHO1766
+
 uptake_names = dict(Ala="EX_ala_L_e_", NH3="EX_nh4_e_", Arg="EX_arg_L_e_", Asn="EX_asn_L_e_", Asp="EX_asp_L_e_",
                     GLC="EX_glc_e_", Glu="EX_glu_L_e_", Gln="EX_gln_L_e_", Gly="EX_gly_e_", His="EX_his_L_e_",
                     Ile="EX_ile_L_e_", LAC="EX_lac_L_e_", Leu="EX_leu_L_e_", Lys="EX_lys_L_e_", Met="EX_met_L_e_",
@@ -128,8 +129,14 @@ uptake_names = dict(Ala="EX_ala_L_e_", NH3="EX_nh4_e_", Arg="EX_arg_L_e_", Asn="
 # model.objective = "biomass_cho_producing" #index 6618
 model.objective = "DM_igg_g_" #index 6618
 
-# model.reactions.biomass_cho.upper_bound = 0
-# model.reactions.biomass_cho.lower_bound = 0
+# # CHOmpact
+# uptake_names = dict(Ala="F110", NH3="F108", Arg="F111", Asn="F112", Asp="F113", GLC="F105", Glu="F115", Gln="F114",
+#                     Gly="F116", His="F117", Ile="F118", LAC="F107", Leu="F119", Lys="F120", Met="F121", Phe="F122",
+#                     Pro="F123", Ser="F124", Thr="F125", Trp="F126", Tyr="F127", Val="F128", Titer="F143")
+#
+# # Set the objective function
+# # model.objective = "F102" #igg
+# model.objective = "F90" #biomass
 
 # %%
 startTime = datetime.now()
@@ -178,6 +185,32 @@ for ex in experiments:
             model.reactions.DM_epo_g_.upper_bound = 0
             model.reactions.biomass_cho.upper_bound = 0
             model.reactions.biomass_cho.lower_bound = 0
+
+            # # Setting bounds for specific CHOmpact reactions
+            # model.reactions.F129.lower_bound = 0.6*0.9
+            # model.reactions.F129.upper_bound = 0.6*1.1
+            # model.reactions.F130.lower_bound = 0.05*0.9
+            # model.reactions.F130.upper_bound = 0.05*1.1
+            # model.reactions.F131.lower_bound = 0.11*0.9
+            # model.reactions.F131.upper_bound = 0.11*1.1
+            # model.reactions.F132.lower_bound = 0.45*0.9
+            # model.reactions.F132.upper_bound = 0.45*1.1
+            # model.reactions.F133.lower_bound = 0.46*0.9
+            # model.reactions.F133.upper_bound = 0.46*1.1
+            # model.reactions.F134.lower_bound = 1.28*0.9
+            # model.reactions.F134.upper_bound = 1.28*1.1
+            # model.reactions.F135.lower_bound = 0.02*0.9
+            # model.reactions.F135.upper_bound = 0.02*1.1
+            # model.reactions.F136.lower_bound = 3.41*0.9
+            # model.reactions.F136.upper_bound = 3.41*1.1
+            # model.reactions.F137.lower_bound = 0.84*0.9
+            # model.reactions.F137.upper_bound = 0.84*1.1
+            # model.reactions.F138.lower_bound = 4.1*0.9
+            # model.reactions.F138.upper_bound = 4.1*1.1
+            # model.reactions.F139.lower_bound = 0.19*0.9
+            # model.reactions.F139.upper_bound = 0.19*1.1
+            # model.reactions.F140.lower_bound = 0.09*0.9
+            # model.reactions.F140.upper_bound = 0.09*1.1
 
             # Initialize dictionary for storing bounds and fluxes for all reactions
             for reaction in model.reactions:
