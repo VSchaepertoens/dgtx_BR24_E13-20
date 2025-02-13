@@ -32,7 +32,7 @@ mp_growth_rates <- m_growth_rates %>%
 # Ensure that rows align by joining based on common columns for dotplot
 mp_growth_rates_joined <- m_growth_rates  %>%
   full_join(p_growth_rates %>% 
-              filter(Type != "iCHO1766_pFBA"), 
+              filter(Type != "iCHO1766_FBA"), 
             by = c("Experiment", "Window", "AA_meta")) %>%
   # full_join(p_growth_rates_icho2441, by = c("Experiment", "Window", "Condition", "AA_meta")) %>%
   rename(measured = Rate.x,
@@ -69,7 +69,7 @@ mp_titer_rates <- m_titer_rates %>%
   # Ensure that rows align by joining based on common columns for dotplot
   mp_titer_rates_joined <- m_titer_rates %>%
     full_join(p_titer_rates %>% 
-                filter(Type != "iCHO1766_FBA"), 
+                filter(Type != "iCHO1766_pFBA"), 
               by = c("Experiment", "Window", "AA_meta")) %>%
     # full_join(p_titer_rates_icho2441, by = c("Experiment", "Window", "Condition", "AA_meta")) %>%
     rename(measured = Rate.x,
@@ -80,6 +80,8 @@ mp_titer_rates <- m_titer_rates %>%
            # icho2441_error = SD
            ) %>%
     select(!c("Type.x", "Type.y"))
+  
+
   
 # function to plot data barplots ---------------------------------------------------
 plot_rates <- function(data_to_plot,
@@ -118,14 +120,15 @@ plot_rates <- function(data_to_plot,
   
 # growth rate
 y_label_growth_rate <- expression(paste("growth rate (",h^-1,")"))
-growth_rate_limits = c(-0.015, 0.045)
+growth_rate_limits <-  c(round(min(mp_growth_rates$Rate - mp_growth_rates$SD, na.rm = TRUE), digits = 7), 
+                         round(max(mp_growth_rates$Rate + mp_growth_rates$SD, na.rm = TRUE), digits = 7))
 
 plot_rates(data_to_plot = mp_growth_rates %>% filter(Type != "iCHO1766_pFBA"),
            y_axis_label = y_label_growth_rate,
            y_axis_limits = growth_rate_limits,
            plot_growth_rate = TRUE)
 
-ggsave(filename = "figures/growth_rates_case2_1.png",
+ggsave(filename = "figures/fba/pfba_fba_fva/condition_specific_biomass_FBA.png",
        height = 70,
        width = 250,
        units = "mm",
@@ -134,14 +137,15 @@ ggsave(filename = "figures/growth_rates_case2_1.png",
 
 # titer
 y_label_titer_rate <- expression(paste("specific antibody productivity (mM g DC",W^-1,h^-1,") x",~ 10^-5))
-titer_rate_limits = c(-1e-5, 8e-5)
+titer_rate_limits <-  c(round(min(mp_titer_rates$Rate - mp_titer_rates$SD, na.rm = TRUE), digits = 7), 
+                      round(max(mp_titer_rates$Rate + mp_titer_rates$SD, na.rm = TRUE), digits = 7))
 
-plot_rates(data_to_plot = mp_titer_rates %>% filter(Type != "iCHO1766_pFBA"),
+plot_rates(data_to_plot = mp_titer_rates %>% filter(Type != "iCHO1766_FBA"),
            y_axis_label = y_label_titer_rate,
            y_axis_limits = titer_rate_limits,
            plot_growth_rate = FALSE)
 
-ggsave(filename = "figures/titer_rates_case2_2.png",
+ggsave(filename = "figures/fba/pfba_fba_fva/condition_specific_igg_pFBA.png",
        height = 70,
        width = 250,
        units = "mm",
@@ -193,11 +197,13 @@ ggplot(mp_growth_rates_joined %>% filter(Window %in% c("1", "2", "3")), aes(x = 
   facet_wrap(~Window, nrow = 1) 
 
  
-ggsave(filename = "figures/fba/dotplots_growth_rates_case2_1_icho1766_window1_2_3_axes_fixed.png",
+ggsave(filename = "figures/fba/pfba_fba_fva/dotplots_biomass_pFBA_window1_2_3.png",
        height = 100,
        width = 200,
        units = "mm",
        dpi = 600) 
+
+
 
 #titer
 ggplot(mp_titer_rates_joined %>% filter(Window %in% c("3", "4", "5")), aes(x = measured, y = icho1766, color = Experiment)) +
@@ -231,11 +237,12 @@ ggplot(mp_titer_rates_joined %>% filter(Window %in% c("3", "4", "5")), aes(x = m
   facet_wrap(~Window, nrow = 1)
 
 
-ggsave(filename = "figures/fba/dotplots_titer_rates_case2_1_icho1766_window3_4_5_coord_fixed.png",
+ggsave(filename = "figures/fba/pfba_fba_fva/dotplots_igg_FBA_window3_4_5.png",
        height = 100,
        width = 200,
        units = "mm",
        dpi = 600)
+
 
 
   
