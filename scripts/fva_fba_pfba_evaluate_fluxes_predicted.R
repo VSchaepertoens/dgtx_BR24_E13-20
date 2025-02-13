@@ -4,6 +4,7 @@ library(readxl)
 # Load necessary libraries
 library(dplyr)
 library(ggplot2)
+library(ComplexHeatmap)
 
 
 # load FVA data and combine into a single df ------------------------------
@@ -48,17 +49,9 @@ combined_fva_data <- bind_rows(fva_data_list) %>%
   rename(Min_flux = `Min. Flux`,
          Max_flux = `Max. Flux`)
 
-# load FBA data -----------------------------------------------------------
+# load FBA and pFBA data -----------------------------------------------------------
 
 fba_data <- read_csv("fba_results/condition_specific/iCHO1766_biomass_producing/reaction_data_results_icho1766_FBA_pFBA.csv")
-
-
-# load pFBA data ----------------------------------------------------------
-
-# pfba_data <- read_csv("fba_results/condition_specific/iCHO1766_biomass_producing/reaction_data_results_icho1766_pFBA.csv")
-
-# join fva, fba and pFBA into one df
-
 
 # plot fva, fba and pFBA results of particular reactions --------------
 
@@ -69,7 +62,7 @@ igg_rxn <- c("igg_hc", "igg_lc", "igg_formation", "DM_igg_g_")
 
 filt_fva_data <- combined_fva_data %>%
   filter(
-         Reaction %in% glycolysis_rxn)
+         Reaction %in% igg_rxn)
 
 filt_fba_data <- fba_data %>%
   filter(
@@ -95,15 +88,14 @@ color_mapping_experiment <- c(
   "E19" = "#A63603",
   "E20" = "#54278F"
 )
-
-
-ggplot(joined_fva_fba_pfba, aes(x = Reaction, y = Flux, color = Experiment)) +
-  geom_pointrange(aes(ymin = Min_flux, ymax = Max_flux)) +
-  facet_grid(Experiment ~ Window) +
-  # facet_wrap(~ Window, ncol = 5) +
-  scale_color_manual(values = color_mapping_experiment) +
-  theme_bw() +
-  theme(axis.text.x = element_text(angle = 90))
+# 
+# ggplot(joined_fva_fba_pfba, aes(x = Reaction, y = Flux, color = Experiment)) +
+#   geom_pointrange(aes(ymin = Min_flux, ymax = Max_flux)) +
+#   facet_grid(Experiment ~ Window) +
+#   # facet_wrap(~ Window, ncol = 5) +
+#   scale_color_manual(values = color_mapping_experiment) +
+#   theme_bw() +
+#   theme(axis.text.x = element_text(angle = 90))
 
 ggplot(filt_fba_data, aes(x = Reaction)) +
   geom_point(aes(y = FBA_Flux), color = "blue") +
@@ -116,14 +108,26 @@ ggplot(filt_fba_data, aes(x = Reaction)) +
   theme(axis.text.x = element_text(angle = 90))
 
 
-
-# PCA --------------------------------------------------------------------
-# Assuming your data is in a dataframe called 'df'
-# df should have columns: Experiment, Window, Reaction, Flux
-
+# reshaping data ----------------------------------------------------------
 # Step 1: Reshape the data to wide format
 # Each reaction will be a column, and each row will be a unique combination of Experiment and Window
-df_wide <- fba_data %>%
+df_wide_pFBA <- fba_data %>%
+  select(Experiment, Window, Reaction, pFBA_Flux) %>%
+  # Aggregate duplicates (if any)
+  group_by(Experiment, Window, Reaction) %>%
+  summarize(Flux = mean(pFBA_Flux, na.rm = TRUE), .groups = 'drop') %>%
+  # Ensure all combinations are present
+  complete(Experiment, Window, Reaction, fill = list(Flux = 0)) %>%
+  # Pivot to wide format
+  pivot_wider(names_from = Reaction, values_from = Flux) %>%
+  # Add column to indicate method type
+  mutate(Method = "pfba") %>%
+  # Create unique row identifiers
+  mutate(experiment_window_method = paste(Experiment, Window, Method,  sep = "_")) %>%
+  # Move to row names
+  column_to_rownames("experiment_window_method")
+
+df_wide_FBA <- fba_data %>%
   select(Experiment, Window, Reaction, FBA_Flux) %>%
   # Aggregate duplicates (if any)
   group_by(Experiment, Window, Reaction) %>%
@@ -132,29 +136,36 @@ df_wide <- fba_data %>%
   complete(Experiment, Window, Reaction, fill = list(Flux = 0)) %>%
   # Pivot to wide format
   pivot_wider(names_from = Reaction, values_from = Flux) %>%
+  # Add column to indicate method type
+  mutate(Method = "fba") %>%
   # Create unique row identifiers
-  mutate(experiment_window = paste(Experiment, Window, sep = "_")) %>%
+  mutate(experiment_window_method = paste(Experiment, Window, Method,  sep = "_")) %>%
   # Move to row names
-  column_to_rownames("experiment_window")
+  column_to_rownames("experiment_window_method")
 
-# Step 2: Remove columns (reactions) with only zeros
+# bind both FBA and pFBA
+df_wide <- rbind(df_wide_pFBA, df_wide_FBA)
+
+# PCA --------------------------------------------------------------------
+# Remove columns (reactions) with only zeros
 df_wide <- df_wide %>%
   select(where(~ any(. != 0)))  # Keep only columns with at least one non-zero value
 
 # Perform PCA
-pca_result <- prcomp(x = df_wide %>% select(-Experiment, -Window),
+pca_result <- prcomp(x = df_wide %>% select(-Experiment, -Window, -Method),
                      scale. = TRUE)
 
 #  Extract PCA scores
 pca_scores <- as.data.frame(pca_result$x)
-pca_scores$experiment_window <- rownames(df_wide)
+pca_scores$experiment_window_method <- rownames(df_wide)
 pca_scores$Experiment <- df_wide$Experiment
 pca_scores$Window <- df_wide$Window
+pca_scores$Method <- df_wide$Method
 
-# Step 1: Calculate the variance explained by each PC
+# Calculate the variance explained by each PC
 variance_explained <- pca_result$sdev^2 / sum(pca_result$sdev^2) * 100
 
-# Step 2: Create a summary table
+# Create a summary table
 variance_summary <- data.frame(
   PC = paste0("PC", 1:length(variance_explained)),
   Variance_Explained = variance_explained
@@ -166,7 +177,7 @@ cat("Variance explained by PC2:", round(variance_summary$Variance_Explained[2], 
 cat("Variance explained by PC3:", round(variance_summary$Variance_Explained[3], 2), "%\n")
 cat("Variance explained by PC4:", round(variance_summary$Variance_Explained[4], 2), "%\n")
 
-# Step 4: Visualize the PCA results
+# Visualize the PCA results
 # Plot PCA with color by Experiment
 ggplot(pca_scores, aes(x = PC1, y = PC2, color = Experiment)) +
   geom_point(size = 3) +
@@ -183,6 +194,15 @@ ggplot(pca_scores, aes(x = PC1, y = PC2, color = as.factor(Window))) +
        x = "Principal Component 1",
        y = "Principal Component 2",
        color = "Window")
+
+# Plot PCA with color by Window
+ggplot(pca_scores, aes(x = PC1, y = PC2, color = as.factor(Method))) +
+  geom_point(size = 3) +
+  theme_minimal() +
+  labs(title = "PCA of Flux Data by Method",
+       x = "Principal Component 1",
+       y = "Principal Component 2",
+       color = "Method")
 
 # # Plot PCA with color by experiment_window
 # ggplot(pca_scores, aes(x = PC1, y = PC2, color = experiment_window)) +
@@ -208,4 +228,103 @@ ggplot(pca_scores_window, aes(x = PC1, y = PC2, color = Experiment)) +
        x = "Principal Component 1",
        y = "Principal Component 2")
 }
-pca_per_window(pca_scores, 2)
+pca_per_window(pca_scores, 5)
+
+
+# Flux correlation analysis -----------------------------------------------
+# Analyze the correlation between fluxes from FBA, pFBA, and FVA.
+# 
+# Steps:
+#   
+#   Compute the correlation matrix between the fluxes from FBA, pFBA, and FVA (e.g., using Pearson or Spearman correlation).
+# 
+# Visualize the correlation matrix as a heatmap to identify reactions with highly correlated or uncorrelated fluxes.
+# 
+# Focus on reactions with high variability (e.g., those with large differences between FVA min and max fluxes).
+#pFBA and FBA matrix
+fba_pfba_matrix <- df_wide %>%
+  select(!c(Experiment, Window, Method)) %>%
+  t()
+
+cor_fba_pfba_matrix <- cor(fba_pfba_matrix, method = "spearman")
+cor_fba_pfba_matrix[cor_fba_pfba_matrix == 1] <- NA
+Heatmap(cor_fba_pfba_matrix, na_col = "grey")
+
+#pFBA matrix
+pfba_matrix <- df_wide %>%
+  filter(Method == "pfba") %>%
+  select(!c(Experiment, Window, Method)) %>%
+  t()
+
+cor_pfba_matrix <- cor(pfba_matrix, method = "spearman")
+cor_pfba_matrix[cor_pfba_matrix == 1] <- NA
+Heatmap(cor_pfba_matrix, na_col = "grey")
+
+#FBA matrix
+fba_matrix <- df_wide %>%
+  filter(Method == "fba") %>%
+  select(!c(Experiment, Window, Method)) %>%
+  t()
+
+cor_fba_matrix <- cor(fba_matrix, method = "spearman")
+cor_fba_matrix[cor_fba_matrix == 1] <- NA
+Heatmap(cor_fba_matrix, na_col = "grey")
+
+# Reaction variability analysis -------------------------------------------
+# Use FVA results to identify reactions with high variability (i.e., large differences between min and max fluxes).
+# 
+# Steps:
+#   
+#   Calculate the range of variability for each reaction:
+#   Variability Range=FVA max−FVA min
+# Variability Range=FVA max−FVA min
+# 
+# Rank reactions by their variability range and focus on the most variable reactions.
+# 
+# Compare the variability of these reactions across different conditions or experiments.
+
+variability_fva_matrix <- combined_fva_data %>%
+  mutate(variability = abs(Max_flux) - abs(Min_flux),
+         experiment_window = paste(Experiment, Window, sep = "_")) %>%
+  select(Reaction,variability,experiment_window) %>%
+  # Pivot to wide format
+  pivot_wider(names_from = Reaction, values_from = variability) %>%
+  select(where(~ !all(. == 1000))) %>%  # Keep columns where not all values are 1000
+  select(where(~ any(. != 0))) %>%     # Keep columns with at least one non-zero value
+  column_to_rownames("experiment_window") %>%
+  t()
+
+Heatmap(matrix = variability_fva_matrix,
+        show_row_names = FALSE,
+        cluster_columns = FALSE)
+
+
+# Flux difference analysis ------------------------------------------------
+# Compare the fluxes from FBA and pFBA to identify reactions with significant differences.
+# 
+# Steps:
+#   
+#   Compute the absolute difference between FBA and pFBA fluxes for each reaction:
+#   Difference=∣FBA flux−pFBA flux∣
+# Difference=∣FBA flux−pFBA flux∣
+# 
+# Rank reactions by their flux differences and focus on those with the largest differences.
+# 
+# Investigate why these reactions have different fluxes (e.g., due to alternative pathways or degeneracy in the solution space).
+
+# Calculate absolute differences between FBA and pFBA fluxes
+  pfba_fba_differences <- fba_data %>%
+  mutate(difference = abs(FBA_Flux - pFBA_Flux),
+         experiment_window = paste(Experiment, Window, sep = "_")) %>%
+  select(Reaction,difference,experiment_window) %>%
+  # Pivot to wide format
+  pivot_wider(names_from = Reaction, values_from = difference) %>%
+  select(where(~ any(. != 0)))  %>% # Keep only columns with at least one non-zero value 
+  column_to_rownames("experiment_window") %>%
+  t()
+
+Heatmap(matrix = pfba_fba_differences,
+        show_row_names = FALSE)
+
+
+
