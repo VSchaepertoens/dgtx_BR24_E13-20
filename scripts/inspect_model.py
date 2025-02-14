@@ -37,9 +37,11 @@ os.chdir(current_wd)
 # %% load cho model
 
 models = {
-    "iCHO1766": "iCHOv1_final.xml",
+    # "iCHO1766": "iCHOv1_final.xml",
     # "iCHO2441": "iCHO2441.xml",
     # "CHO-K1": "iCHOv1_K1_final.xml",
+    # "CHOmpact": "CHOmpact_generic_producing_CK.json",
+    "CHOmpact": "CHOmpact_generic_producing_Published_Fixed.json",
     # "CHOmpact": "CHOsmallmodel.json"
     # "CHOmpact_small": "CHOsmallmodel_activity4.json"
     # "K1par-0mMCD": "iCHO_K1par-0mMCD.xml"
@@ -80,7 +82,7 @@ reaction_df = pd.DataFrame(reaction_list)
 
 # Export the model to excel format
 DIRECTORYPATH = "C:/Users/b1095820/Documents/DGTX/BR24_E13-20/cho_gems"
-FILENAME = "iCHO1766.xlsx"
+FILENAME = "CHOmpact_generic_producing_Published_Fixed.xlsx"
 FILEPATH = os.path.join(DIRECTORYPATH, FILENAME)
 reaction_df.to_excel(FILEPATH, index=True)
 
