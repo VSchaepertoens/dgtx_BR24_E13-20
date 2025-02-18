@@ -179,14 +179,6 @@ ggplot(mp_growth_rates_joined %>% filter(Window %in% c("1", "2", "3")), aes(x = 
     width = .001,
     linewidth = .25
   ) +
-  # geom_errorbar(
-  #   aes(ymin = icho1766 - icho1766_error,
-  #       ymax = icho1766 + icho1766_error,
-  #       group = Experiment),
-  #   position = position_dodge(.9),
-  #   width = .001,
-  #   linewidth = .25
-  # ) +
   scale_color_manual(values = color_mapping_experiment) +
   scale_y_continuous(limits = c(-0.005, 0.04)) +
   scale_x_continuous(limits = c(-0.005, 0.04)) +
@@ -203,6 +195,38 @@ ggsave(filename = "figures/fba/pfba_fba_fva/dotplots_biomass_pFBA_window1_2_3.pn
        units = "mm",
        dpi = 600) 
 
+mp_growth_rates_joined$Window <- as.character(mp_growth_rates_joined$Window)
+# growth rates, all windows in one plots
+ggplot(mp_growth_rates_joined, aes(x = measured, y = icho1766, color = Experiment)) +
+  geom_abline(intercept = 0, slope = 1, linewidth = 1) +
+  geom_abline(intercept = 0, slope = 0.75, linetype = 2, color = 'grey40') +
+  geom_abline(intercept = 0, slope = 1.25, linetype = 2, color = 'grey40') +
+  geom_point(aes(shape = Window)) +
+  geom_errorbar(
+    aes(xmin = measured - measured_error,
+        xmax = measured + measured_error,
+        group = Experiment),
+    position = position_dodge(.9),
+    width = .001,
+    linewidth = .25
+  ) +
+  scale_color_manual(values = color_mapping_experiment) +
+  # scale_y_continuous(limits = c(-0.01, 0.05)) +
+  # scale_x_continuous(limits = c(-0.01, 0.05)) +
+  coord_fixed() +
+  labs(x = "Measured (Experimental) Rates", 
+       y = "Predicted Rates", 
+       title = "iCHO1766 Predicted vs Measured Rates") +
+  # facet_wrap(~Window, nrow = 1) +
+  theme_minimal() +
+  NULL
+
+
+ggsave(filename = "figures/fba/pfba_fba_fva/dotplots_biomass_pFBA_window1_2_3.png",
+       height = 100,
+       width = 200,
+       units = "mm",
+       dpi = 600) 
 
 
 #titer
