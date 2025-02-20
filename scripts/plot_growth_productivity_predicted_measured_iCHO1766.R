@@ -12,37 +12,33 @@ m_growth_rates <- measured_fluxes %>%
 
 p_growth_rates <- read_csv("fba_results/condition_specific/iCHO1766_biomass_producing/mus_results_icho1766_FBA_pFBA.csv") %>%
   mutate(AA_meta = "Growth_rate",
-         Type = "iCHO1766") %>%
-  pivot_longer(cols = c("FBA_mu", "pFBA_mu"), names_to = "method_type") %>%
+         Type = "iCHO1766"
+         ) %>%
+  pivot_longer(cols = c("FBA_mu", "pFBA_mu"), 
+               names_to = "method_type"
+               ) %>%
   mutate(Type = paste(Type, method_type, sep = "_"),
-         SD = 0) %>%
+         SD = 0
+         ) %>%
   mutate(Type = gsub("_mu", "", Type)) %>%
   rename(Rate = value) %>%
   select(!method_type)
 
-# # merge predicted with measured dfs
+# Bind predicted and measured by rows for plotting bar plots
 mp_growth_rates <- m_growth_rates %>%
   rbind(p_growth_rates) 
-  
-# 
-# 
-# save(mp_growth_rates, file = "fba_results/both_conditions/case_2_1_mus.RData")
-# load("fba_results/both_conditions/case_2_1_mus.RData")
 
-# Ensure that rows align by joining based on common columns for dotplot
+# Join predicted and measured for plotting dot plots
 mp_growth_rates_joined <- m_growth_rates  %>%
-  full_join(p_growth_rates %>% 
-              filter(Type != "iCHO1766_FBA"), 
-            by = c("Experiment", "Window", "AA_meta")) %>%
-  # full_join(p_growth_rates_icho2441, by = c("Experiment", "Window", "Condition", "AA_meta")) %>%
+  full_join(p_growth_rates %>% filter(Type != "iCHO1766_FBA"), 
+            by = c("Experiment", "Window", "AA_meta")
+            ) %>%
   rename(measured = Rate.x,
          measured_error = SD.x,
-         icho1766 = Rate.y,
-         # icho1766_error = SD.y,
-         # icho2441 = Rate,
-         # icho2441_error = SD
+         icho1766 = Rate.y
          ) %>%
-  select(!c("Type.x", "Type.y"))
+  select(!c("Type.x", "Type.y")) %>%
+  mutate(Window = as.character(Window))
 
 
 # TITER rates ----------------------------
@@ -55,36 +51,37 @@ mp_growth_rates_joined <- m_growth_rates  %>%
 ## PREDICTED iCHO1766 ##
 p_titer_rates <- read_csv("fba_results/condition_specific/iCHO1766_igg/mus_results_icho1766_FBA_pFBA.csv") %>%
   mutate(AA_meta = "Titer",
-         Type = "iCHO1766") %>%
-  pivot_longer(cols = c("FBA_mu", "pFBA_mu"), names_to = "method_type") %>%
+         Type = "iCHO1766"
+         ) %>%
+  pivot_longer(cols = c("FBA_mu", "pFBA_mu"), 
+               names_to = "method_type"
+               ) %>%
   mutate(Type = paste(Type, method_type, sep = "_"),
-         SD = 0) %>%
-  mutate(Type = gsub("_mu", "", Type)) %>%
+         SD = 0
+         ) %>%
+  mutate(Type = gsub("_mu", "", Type)
+         ) %>%
   rename(Rate = value) %>%
   select(!method_type)
 
+# Bind predicted and measured by rows for plotting bar plots
 mp_titer_rates <- m_titer_rates %>%
   rbind(p_titer_rates) 
 
-  # Ensure that rows align by joining based on common columns for dotplot
-  mp_titer_rates_joined <- m_titer_rates %>%
-    full_join(p_titer_rates %>% 
-                filter(Type != "iCHO1766_pFBA"), 
-              by = c("Experiment", "Window", "AA_meta")) %>%
-    # full_join(p_titer_rates_icho2441, by = c("Experiment", "Window", "Condition", "AA_meta")) %>%
-    rename(measured = Rate.x,
-           measured_error = SD.x,
-           icho1766 = Rate.y,
-           # icho1766_error = SD.y,
-           # icho2441 = Rate,
-           # icho2441_error = SD
-           ) %>%
-    select(!c("Type.x", "Type.y"))
+# Join predicted and measured for plotting dot plots
+mp_titer_rates_joined <- m_titer_rates %>%
+  full_join(p_titer_rates %>% filter(Type != "iCHO1766_pFBA"), 
+            by = c("Experiment", "Window", "AA_meta")
+            ) %>%
+  rename(measured = Rate.x,
+         measured_error = SD.x,
+         icho1766 = Rate.y
+         ) %>%
+  select(!c("Type.x", "Type.y")) %>%
+  mutate(Window = as.character(Window))
   
-
-  
-# function to plot data barplots ---------------------------------------------------
-plot_rates <- function(data_to_plot,
+# function to plot barplots ---------------------------------------------------
+plot_barplot <- function(data_to_plot,
                        y_axis_label,
                        y_axis_limits,
                        plot_growth_rate = FALSE){
@@ -118,15 +115,15 @@ plot_rates <- function(data_to_plot,
      }
 }
   
-# growth rate
+## GROWTH RATE
 y_label_growth_rate <- expression(paste("growth rate (",h^-1,")"))
 growth_rate_limits <-  c(round(min(mp_growth_rates$Rate - mp_growth_rates$SD, na.rm = TRUE), digits = 7), 
                          round(max(mp_growth_rates$Rate + mp_growth_rates$SD, na.rm = TRUE), digits = 7))
 
-plot_rates(data_to_plot = mp_growth_rates %>% filter(Type != "iCHO1766_pFBA"),
-           y_axis_label = y_label_growth_rate,
-           y_axis_limits = growth_rate_limits,
-           plot_growth_rate = TRUE)
+plot_barplot(data_to_plot = mp_growth_rates %>% filter(Type != "iCHO1766_pFBA"),
+             y_axis_label = y_label_growth_rate,
+             y_axis_limits = growth_rate_limits,
+             plot_growth_rate = TRUE)
 
 ggsave(filename = "figures/fba/pfba_fba_fva/condition_specific_biomass_FBA.png",
        height = 70,
@@ -135,12 +132,12 @@ ggsave(filename = "figures/fba/pfba_fba_fva/condition_specific_biomass_FBA.png",
        dpi = 600)
 
 
-# titer
+# TITER RATE
 y_label_titer_rate <- expression(paste("specific antibody productivity (mM g DC",W^-1,h^-1,") x",~ 10^-5))
 titer_rate_limits <-  c(round(min(mp_titer_rates$Rate - mp_titer_rates$SD, na.rm = TRUE), digits = 7), 
                       round(max(mp_titer_rates$Rate + mp_titer_rates$SD, na.rm = TRUE), digits = 7))
 
-plot_rates(data_to_plot = mp_titer_rates %>% filter(Type != "iCHO1766_FBA"),
+plot_barplot(data_to_plot = mp_titer_rates %>% filter(Type != "iCHO1766_FBA"),
            y_axis_label = y_label_titer_rate,
            y_axis_limits = titer_rate_limits,
            plot_growth_rate = FALSE)
@@ -153,7 +150,6 @@ ggsave(filename = "figures/fba/pfba_fba_fva/condition_specific_igg_pFBA.png",
 
 
 # dotplots exp_growth vs pred_growth plots -------------------------------------------
-# Plotting measured vs predicted rates
 color_mapping_experiment <- c(
   "E13" = "#FD8D3C",
   "E14" = "#9E9AC8",
@@ -165,107 +161,154 @@ color_mapping_experiment <- c(
   "E20" = "#54278F"
 )
 
-#growth rate
-ggplot(mp_growth_rates_joined %>% filter(Window %in% c("1", "2", "3")), aes(x = measured, y = icho1766, color = Experiment)) +
-  geom_abline(intercept = 0, slope = 1, linewidth = 1) +
-  geom_abline(intercept = 0, slope = 0.75, linetype = 2, color = 'grey40') +
-  geom_abline(intercept = 0, slope = 1.25, linetype = 2, color = 'grey40') +
-  geom_point(alpha = 0.7) +
-  geom_errorbar(
-    aes(xmin = measured - measured_error,
-        xmax = measured + measured_error,
-        group = Experiment),
-    position = position_dodge(.9),
-    width = .001,
-    linewidth = .25
-  ) +
-  scale_color_manual(values = color_mapping_experiment) +
-  scale_y_continuous(limits = c(-0.005, 0.04)) +
-  scale_x_continuous(limits = c(-0.005, 0.04)) +
-  coord_fixed() +
-  labs(x = "Measured (Experimental) Rates", 
-       y = "Predicted Rates", 
-       title = "iCHO1766 Predicted vs Measured Rates") +
-  facet_wrap(~Window, nrow = 1) 
 
- 
-ggsave(filename = "figures/fba/pfba_fba_fva/dotplots_biomass_pFBA_window1_2_3.png",
+# function to plots dot plots of measured vs predicted rates
+plot_dotplot <- function(in_data = mp_growth_rates_joined %>% filter(Window %in% c("1", "2", "3")),
+                         x_y_lim = c(-0.005, 0.04),
+                         facet_window = TRUE,
+                         xlab,
+                         ylab,
+                         plot_titer = FALSE
+                         ){
+  
+  # Define point layer
+  point_layer <- geom_point(aes(shape = if (facet_window) NULL else Window))
+  
+  # Define facet layer
+  facet_layer <- if (facet_window) facet_wrap(~Window, nrow = 1) else NULL
+
+  # Define axis labels for Titer
+  axis_labels <- if (plot_titer) function(x) x * 1e5 else identity
+  
+  # Define abline parameters
+  abline_params <- list(
+    geom_abline(intercept = 0, slope = 1, linewidth = 0.5),
+    geom_abline(intercept = 0, slope = 0.75, linetype = 2, color = 'grey40'),
+    geom_abline(intercept = 0, slope = 1.25, linetype = 2, color = 'grey40')
+  )
+  
+  ggplot(in_data, aes(x = measured, y = icho1766, color = Experiment)) +
+    abline_params +
+    point_layer +
+    geom_errorbar(
+      aes(xmin = measured - measured_error,
+          xmax = measured + measured_error,
+          group = Experiment),
+      position = position_dodge(.9),
+      width = .00025,
+      linewidth = .25
+    ) +
+    scale_color_manual(values = color_mapping_experiment) +
+    scale_y_continuous(name = ylab,
+                       limits = x_y_lim,
+                       labels = axis_labels) +
+    scale_x_continuous(name = xlab,
+                       limits = x_y_lim,
+                       labels = axis_labels) +
+    coord_fixed() +
+    labs(title = "iCHO1766 Predicted vs Measured Rates") +
+    theme_minimal() +
+    facet_layer +
+    # Enhance readability and aesthetics 
+    theme(
+      axis.title = element_text(size = 12, face = "bold"),
+      axis.text = element_text(size = 10),
+      plot.title = element_text(size = 14, face = "bold"),
+      legend.position = "top"
+    ) +
+    # Fix legend title for 'Window'
+    guides(shape = guide_legend(title = "Window"))
+}
+
+
+## GROWTH rates
+# faceted by window
+growth_rate_limits <-  c(round(min(mp_growth_rates$Rate - mp_growth_rates$SD, na.rm = TRUE), digits = 7), 
+                         round(max(mp_growth_rates$Rate + mp_growth_rates$SD, na.rm = TRUE), digits = 7))
+
+plot_dotplot(in_data = mp_growth_rates_joined,
+             x_y_lim = growth_rate_limits,
+             facet_window = TRUE,
+             xlab = expression(paste("Measured (Experimental) Rates [",h^-1 ,"]")), 
+             ylab = expression(paste("Predicted Rates [",h^-1 ,"]")),
+             plot_titer = FALSE
+             )
+ggsave(filename = "figures/fba/pfba_fba_fva/dotplots_biomass_FBA_facet_window.png",
+       height = 100,
+       width = 200,
+       units = "mm",
+       dpi = 600,
+       bg = "white") 
+
+
+mp_growth_rates_w123 <- mp_growth_rates %>% filter(Window %in% c("1", "2", "3"))
+growth_rate_limits_w123 <-  c(round(min(mp_growth_rates_w123$Rate - mp_growth_rates_w123$SD, na.rm = TRUE), digits = 7), 
+                              round(max(mp_growth_rates_w123$Rate + mp_growth_rates_w123$SD, na.rm = TRUE), digits = 7))
+
+plot_dotplot(in_data = mp_growth_rates_joined %>% filter(Window %in% c("1", "2", "3")),
+             x_y_lim = growth_rate_limits_w123,
+             facet_window = TRUE,
+             xlab = expression(paste("Measured (Experimental) Rates [",h^-1 ,"]")), 
+             ylab = expression(paste("Predicted Rates [",h^-1 ,"]")),
+             plot_titer = FALSE)
+
+ggsave(filename = "figures/fba/pfba_fba_fva/dotplots_biomass_FBA_facet_w123.png",
        height = 100,
        width = 200,
        units = "mm",
        dpi = 600) 
 
-mp_growth_rates_joined$Window <- as.character(mp_growth_rates_joined$Window)
-# growth rates, all windows in one plots
-ggplot(mp_growth_rates_joined, aes(x = measured, y = icho1766, color = Experiment)) +
-  geom_abline(intercept = 0, slope = 1, linewidth = 1) +
-  geom_abline(intercept = 0, slope = 0.75, linetype = 2, color = 'grey40') +
-  geom_abline(intercept = 0, slope = 1.25, linetype = 2, color = 'grey40') +
-  geom_point(aes(shape = Window)) +
-  geom_errorbar(
-    aes(xmin = measured - measured_error,
-        xmax = measured + measured_error,
-        group = Experiment),
-    position = position_dodge(.9),
-    width = .001,
-    linewidth = .25
-  ) +
-  scale_color_manual(values = color_mapping_experiment) +
-  # scale_y_continuous(limits = c(-0.01, 0.05)) +
-  # scale_x_continuous(limits = c(-0.01, 0.05)) +
-  coord_fixed() +
-  labs(x = "Measured (Experimental) Rates", 
-       y = "Predicted Rates", 
-       title = "iCHO1766 Predicted vs Measured Rates") +
-  # facet_wrap(~Window, nrow = 1) +
-  theme_minimal() +
-  NULL
+# not faceted by window
+plot_dotplot(in_data = mp_growth_rates_joined ,
+             x_y_lim = growth_rate_limits,
+             facet_window = FALSE,
+             xlab = expression(paste("Measured (Experimental) Rates [",h^-1 ,"]")), 
+             ylab = expression(paste("Predicted Rates [",h^-1 ,"]")),
+             plot_titer = FALSE)
+
+ggsave(filename = "figures/fba/pfba_fba_fva/dotplots_biomass_FBA_NOfacet_window.png",
+       height = 120,
+       width = 150,
+       units = "mm",
+       dpi = 600,
+       bg = "white") 
+
+plot_dotplot(in_data = mp_growth_rates_joined %>% filter(Window %in% c("1", "2", "3")),
+             x_y_lim = growth_rate_limits_w123,
+             facet_window = FALSE,
+             xlab = expression(paste("Measured (Experimental) Rates [",h^-1 ,"]")), 
+             ylab = expression(paste("Predicted Rates [",h^-1 ,"]")),
+             plot_titer = FALSE)
+
+ggsave(filename = "figures/fba/pfba_fba_fva/dotplots_biomass_FBA_NOfacet_w123.png",
+       height = 120,
+       width = 150,
+       units = "mm",
+       dpi = 600,
+       bg = "white")
 
 
-ggsave(filename = "figures/fba/pfba_fba_fva/dotplots_biomass_pFBA_window1_2_3.png",
-       height = 100,
+
+## TITER rates
+# faceted by window
+titer_rate_limits <-  c(round(min(mp_titer_rates$Rate - mp_titer_rates$SD, na.rm = TRUE), digits = 7), 
+                         round(max(mp_titer_rates$Rate + mp_titer_rates$SD, na.rm = TRUE), digits = 7))
+
+plot_dotplot(in_data = mp_titer_rates_joined,
+             x_y_lim = titer_rate_limits,
+             facet_window = TRUE,
+             xlab = expression(paste("Measured (Experimental) Rates [mM g DC",W^-1,h^-1,"] x",~ 10^-5)), 
+             ylab = expression(paste("Predicted Rates  [mM g DC",W^-1,h^-1,"] x",~ 10^-5)),
+             plot_titer = TRUE
+             )
+
+ggsave(filename = "figures/fba/pfba_fba_fva/dotplots_igg_FBA_facet_window.png",
+       height = 55,
        width = 200,
        units = "mm",
-       dpi = 600) 
+       dpi = 600,
+       bg = "white") 
 
-
-#titer
-ggplot(mp_titer_rates_joined %>% filter(Window %in% c("3", "4", "5")), aes(x = measured, y = icho1766, color = Experiment)) +
-  geom_abline(intercept = 0, slope = 1, linewidth = 1) +
-  geom_abline(intercept = 0, slope = 0.75, linetype = 2, color = 'grey40') +
-  geom_abline(intercept = 0, slope = 1.25, linetype = 2, color = 'grey40') +
-  geom_point(alpha = 0.7) +
-  geom_errorbar(
-    aes(xmin = measured - measured_error,
-        xmax = measured + measured_error,
-        group = Experiment),
-    position = position_dodge(.9),
-    width = .001,
-    linewidth = .25
-  ) +
-  # geom_errorbar(
-  #   aes(ymin = icho1766 - icho1766_error,
-  #       ymax = icho1766 + icho1766_error,
-  #       group = Experiment),
-  #   position = position_dodge(.9),
-  #   width = .001,
-  #   linewidth = .25
-  # ) +
-  scale_color_manual(values = color_mapping_experiment) +
-  scale_y_continuous(limits = c(-0.2e-5, 3.5e-5), labels = function(x) x * 1e5) +
-  scale_x_continuous(limits = c(-0.2e-5, 3.5e-5), labels = function(x) x * 1e5) +
-  coord_fixed() +
-  labs(x = "Measured (Experimental) Rates",
-       y = "Predicted Rates",
-       title = "iCHO1766 Predicted vs Measured Rates") +
-  facet_wrap(~Window, nrow = 1)
-
-
-ggsave(filename = "figures/fba/pfba_fba_fva/dotplots_igg_FBA_window3_4_5.png",
-       height = 100,
-       width = 200,
-       units = "mm",
-       dpi = 600)
 
 
 
