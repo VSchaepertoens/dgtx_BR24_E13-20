@@ -89,4 +89,20 @@ ggplot(data = rates_with_growth, aes(x = Window, y = Rate, color = Experiment)) 
   scale_color_manual(values = color_mapping_experiment) +  # Customize colors
   facet_wrap(~ AA_meta, nrow = 6, scales = "free_y") + # Facet by AA_meta, independent y scales
   theme_minimal()
+  
+  # Calculate variance for each combination of Window and AA_meta (across all experiments)
+  variance_per_window_aa <- rates_with_growth %>%
+    group_by(Window, AA_meta) %>%
+    summarise(variance = var(Rate, na.rm = TRUE), .groups = "drop")
+  
+  # View the variance data
+  print(variance_per_window_aa)  
 
+  # Create a separate plot for variance
+  ggplot(variance_per_window_aa, aes(x = Window, y = variance, group = AA_meta)) +
+    geom_point(size = 3) +  # Plot variance as points
+    geom_line() +  # Connect points with a line
+    facet_wrap(~ AA_meta, nrow = 6, scales = "free_y") +  # Facet by AA_meta with independent y scales
+    # scale_color_manual(values = color_mapping_experiment) +  # Customize colors for AA_meta
+    theme_minimal() +
+    labs(y = "Variance", x = "Window")  # Label axes for clarity
