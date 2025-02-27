@@ -55,3 +55,38 @@ rates_with_growth_nottshifted <- rates_with_growth %>%
 write_csv(rates_with_growth, "data/aa_rates_reordered_data2.csv")
 write_csv(rates_with_growth_nottshifted, "data/aa_rates_reordered_data2_nottshifted.csv")
 write_csv(rates_with_growth_tshifted , "data/aa_rates_reordered_data2_tshifted.csv")
+
+
+# plot rates within windows -----------------------------------------------
+color_mapping_experiment <- c(
+  "E13" = "#FD8D3C",
+  "E14" = "#9E9AC8",
+  "E15" = "#F16913",
+  "E16" = "#807DBA",
+  "E17" = "#D94801",
+  "E18" = "#6A51A3",
+  "E19" = "#A63603",
+  "E20" = "#54278F"
+)
+
+rates_with_growth <- read_csv("data/aa_rates_reordered_data2.csv")
+
+# Ensure that 'Window' is a factor to correctly handle the x-axis and dodging
+rates_with_growth$Window <- factor(rates_with_growth$Window)
+
+# Create the plot
+ggplot(data = rates_with_growth, aes(x = Window, y = Rate, color = Experiment)) +
+  geom_point(position = position_dodge(width = 0.5)) +  # Adjust points with dodge to separate experiments
+  geom_errorbar(
+    aes(
+      ymin = Rate - SD,  # Lower bound of error bar
+      ymax = Rate + SD   # Upper bound of error bar
+    ),
+    position = position_dodge(width = 0.5),  # Ensure error bars are dodged like points
+    width = 0.2,  # Control the width of the error bars (adjust as necessary)
+    linewidth = 0.25  # Control line thickness
+  ) +
+  scale_color_manual(values = color_mapping_experiment) +  # Customize colors
+  facet_wrap(~ AA_meta, nrow = 6, scales = "free_y") + # Facet by AA_meta, independent y scales
+  theme_minimal()
+
