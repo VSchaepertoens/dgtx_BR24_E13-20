@@ -1,4 +1,5 @@
 library(tidyverse)
+library(ggpubr)
 
 measured_fluxes <- read_csv("data/aa_rates_reordered_data2.csv")
 
@@ -13,100 +14,6 @@ color_mapping_experiment <- c(
   "E20" = "#54278F"
 )
 
-
-# Alanine -----------------------------------------------------------------
-
-measured_fluxes_ala <- measured_fluxes %>%
-  filter(AA_meta %in% "Ala") %>%
-  mutate(Type = "measured",
-         Reaction = "EX_ala_L_e_") %>%
-  select(!c(Condition, AA_meta))
-
-predicted_fluxes_ala <- read_csv("fba_results/condition_specific/iCHO1766_biomass_producing/aa_validation/reaction_data_results_icho1766_FBA_pFBA_Ala.csv") %>%
-  filter(Reaction %in% "EX_ala_L_e_") %>%
-  pivot_longer(cols = c("FBA_Flux", "pFBA_Flux"), 
-               names_to = "Type",
-               values_to = "Rate") %>%
-  select(!c(FBA_LB, FBA_UB, pFBA_LB, pFBA_UB)) %>%
-  mutate(SD = NA)
-
-# merge measured and predicted
-# Bind predicted and measured by rows for plotting bar plots
-mp_fluxes_ala <- measured_fluxes_ala %>%
-  rbind(predicted_fluxes_ala) 
-
-# plot
-
-
-ggplot(mp_fluxes_ala, aes(x = Window, y = Rate, color = Experiment, group = interaction(Window, Experiment))) +
-  geom_point(
-    aes(shape = Type),
-    position = position_dodge(width = 0.2),  
-    size = 2
-  ) +
-  geom_errorbar(
-    aes(
-      ymin = Rate - SD,  
-      ymax = Rate + SD   
-    ),
-    position = position_dodge(width = 0.2),  
-    width = 0.2,  
-    linewidth = 0.5 
-  ) + 
-  scale_color_manual(values = color_mapping_experiment) +
-  ggtitle("EX_ala_L_e_") +
-  theme_bw() +
-  theme(
-    legend.position = "top"  
-  )
-
-# NH3 -----------------------------------------------------------------
-
-measured_fluxes_ala <- measured_fluxes %>%
-  filter(AA_meta %in% "NH3") %>%
-  mutate(Type = "measured",
-         Reaction = "EX_nh4_e_") %>%
-  select(!c(Condition, AA_meta))
-
-predicted_fluxes_ala <- read_csv("fba_results/condition_specific/iCHO1766_biomass_producing/aa_validation/reaction_data_results_icho1766_FBA_pFBA_NH3.csv") %>%
-  filter(Reaction %in% "EX_nh4_e_") %>%
-  pivot_longer(cols = c("FBA_Flux", "pFBA_Flux"), 
-               names_to = "Type",
-               values_to = "Rate") %>%
-  select(!c(FBA_LB, FBA_UB, pFBA_LB, pFBA_UB)) %>%
-  mutate(SD = NA)
-
-# merge measured and predicted
-# Bind predicted and measured by rows for plotting bar plots
-mp_fluxes_ala <- measured_fluxes_ala %>%
-  rbind(predicted_fluxes_ala) 
-
-# plot 
-
-ggplot(mp_fluxes_ala, aes(x = Window, y = Rate, color = Experiment, group = interaction(Window, Experiment))) +
-  geom_point(
-    aes(shape = Type),
-    position = position_dodge(width = 0.2),  
-    size = 2
-  ) +
-  geom_errorbar(
-    aes(
-      ymin = Rate - SD,  
-      ymax = Rate + SD  
-    ),
-    position = position_dodge(width = 0.2),  
-    width = 0.2,  
-    linewidth = 0.5  
-  ) + 
-  scale_color_manual(values = color_mapping_experiment) +
-  ggtitle("EX_nh4_e_") +
-  theme_bw() +
-  theme(
-    legend.position = "top" 
-  )
-
-
-# generic -----------------------------------------------------------------
 # Create a named list 
 metabolite_reaction_pairs <- list(
   Ala = "EX_ala_L_e_",
@@ -132,6 +39,9 @@ metabolite_reaction_pairs <- list(
   Tyr = "EX_tyr_L_e_",
   Val = "EX_val_L_e_"
 )
+
+
+# plot 1 ------------------------------------------------------------------
 
 # Loop over the named list
 for (metabolite in names(metabolite_reaction_pairs)) {
@@ -178,3 +88,90 @@ for (metabolite in names(metabolite_reaction_pairs)) {
 }
 
 
+# plot 2: dotplot per reaction:metabolite --------------------------------
+
+# Calculate the overall range for both axes, considering SD and adding a buffer
+limits_x <- range(
+  c(mp_fluxes_metabolite_wider$Rate_measured - mp_fluxes_metabolite_wider$SD_measured,
+    mp_fluxes_metabolite_wider$Rate_measured + mp_fluxes_metabolite_wider$SD_measured,
+    mp_fluxes_metabolite_wider$Rate_pFBA_Flux), na.rm = TRUE
+)
+
+# Add a buffer (e.g., 5%) to the range
+buffer_x <- 0.05 * (limits_x[2] - limits_x[1])
+
+# Use the same limits for y-axis (since both axes should have the same range)
+limits_y <- limits_x  # Set y-axis limits same as x-axis limits
+
+
+mp_fluxes_metabolite_wider <- mp_fluxes_metabolite %>%
+  pivot_wider(names_from = Type,
+              values_from = c("Rate", "SD")) %>%
+  mutate(Window = as.character(Window))
+
+# Define abline parameters
+abline_params <- list(
+  geom_abline(intercept = 0, slope = 1, linewidth = 0.5),
+  geom_abline(intercept = 0, slope = 0.75, linetype = 2, color = 'grey40'),
+  geom_abline(intercept = 0, slope = 1.25, linetype = 2, color = 'grey40')
+)
+
+fba_comp <- ggplot(mp_fluxes_metabolite_wider, aes(x = Rate_measured, y = Rate_FBA_Flux, color = Experiment)) +
+  abline_params +
+  geom_point(aes(shape = Window)) +
+  geom_errorbar(
+    aes(xmin = Rate_measured - SD_measured,
+        xmax = Rate_measured + SD_measured,
+        group = Experiment),
+    position = position_dodge(.9),
+    width = .00025,
+    linewidth = .25
+  ) +
+  scale_color_manual(values = color_mapping_experiment) +
+  # Set the same limits for both axes with buffer
+  scale_x_continuous(limits = c(limits_x[1] - buffer_x, limits_x[2] + buffer_x)) +
+  scale_y_continuous(limits = c(limits_y[1] - buffer_x, limits_y[2] + buffer_x)) +
+  labs(title = "iCHO1766 Predicted vs Measured Rates") +
+  theme_minimal() +
+  # Enhance readability and aesthetics 
+  theme(
+    axis.title = element_text(size = 12, face = "bold"),
+    axis.text = element_text(size = 10),
+    plot.title = element_text(size = 14, face = "bold"),
+    legend.position = "top"
+  ) +
+  # Fix legend title for 'Window'
+  guides(shape = guide_legend(title = "Window"))
+
+pfba_comp <- ggplot(mp_fluxes_metabolite_wider, aes(x = Rate_measured, y = Rate_pFBA_Flux, color = Experiment)) +
+  abline_params +
+  geom_point(aes(shape = Window)) +
+  geom_errorbar(
+    aes(xmin = Rate_measured - SD_measured,
+        xmax = Rate_measured + SD_measured,
+        group = Experiment),
+    position = position_dodge(.9),
+    width = .00025,
+    linewidth = .25
+  ) +
+  scale_color_manual(values = color_mapping_experiment) +
+  # Set the same limits for both axes with buffer
+  scale_x_continuous(limits = c(limits_x[1] - buffer_x, limits_x[2] + buffer_x)) +
+  scale_y_continuous(limits = c(limits_y[1] - buffer_x, limits_y[2] + buffer_x)) +
+  labs(title = "iCHO1766 Predicted vs Measured Rates") +
+  theme_minimal() +
+  # Enhance readability and aesthetics 
+  theme(
+    axis.title = element_text(size = 12, face = "bold"),
+    axis.text = element_text(size = 10),
+    plot.title = element_text(size = 14, face = "bold"),
+    legend.position = "top"
+  ) +
+  # Fix legend title for 'Window'
+  guides(shape = guide_legend(title = "Window"))
+
+
+ggarrange(fba_comp, 
+          pfba_comp,
+          ncol = 2,
+          common.legend = TRUE)
