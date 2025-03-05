@@ -69,7 +69,7 @@ color_mapping_experiment <- c(
   "E20" = "#54278F"
 )
 
-rates_with_growth <- read_csv("data/aa_rates_reordered_data2.csv")
+rates_with_growth <- read_csv("data/rates_condition_specific/aa_rates_reordered_data2.csv")
 
 # Ensure that 'Window' is a factor to correctly handle the x-axis and dodging
 rates_with_growth$Window <- factor(rates_with_growth$Window)
@@ -89,6 +89,13 @@ ggplot(data = rates_with_growth, aes(x = Window, y = Rate, color = Experiment)) 
   scale_color_manual(values = color_mapping_experiment) +  # Customize colors
   facet_wrap(~ AA_meta, nrow = 6, scales = "free_y") + # Facet by AA_meta, independent y scales
   theme_minimal()
+
+ggsave(filename = "figures/aa_metabolites/aa_rates_reordered_data2.png",
+       width = 210,
+       height = 150, 
+       units = "mm",
+       dpi = 600,
+       bg = "white")
   
   # Calculate variance for each combination of Window and AA_meta (across all experiments)
   variance_per_window_aa <- rates_with_growth %>%
@@ -106,3 +113,31 @@ ggplot(data = rates_with_growth, aes(x = Window, y = Rate, color = Experiment)) 
     # scale_color_manual(values = color_mapping_experiment) +  # Customize colors for AA_meta
     theme_minimal() +
     labs(y = "Variance", x = "Window")  # Label axes for clarity
+  
+
+# window_specific dataset -------------------------------------------------
+
+rates <- read_csv("data/rates_05032025/rates_mM_gDCW_h_new.csv")
+  
+  # Create the plot
+  ggplot(data = rates, aes(x = Window, y = rate_mM_gDCW_h, color = Condition)) +
+    geom_point(position = position_dodge(width = 0.5)) +  # Adjust points with dodge to separate experiments
+    geom_errorbar(
+      aes(
+        ymin = rate_mM_gDCW_h - SD_mM_gDCW_h,  # Lower bound of error bar
+        ymax = rate_mM_gDCW_h + SD_mM_gDCW_h   # Upper bound of error bar
+      ),
+      position = position_dodge(width = 0.5),  # Ensure error bars are dodged like points
+      width = 0.2,  # Control the width of the error bars (adjust as necessary)
+      linewidth = 0.25  # Control line thickness
+    ) +
+    # scale_color_manual(values = color_mapping_experiment) +  # Customize colors
+    facet_wrap(~ Metabolite, nrow = 6, scales = "free_y") + # Facet by AA_meta, independent y scales
+    theme_minimal()
+  
+  ggsave(filename = "figures/aa_metabolites/rates_mM_gDCW_h_new.png",
+         width = 210,
+         height = 150, 
+         units = "mm",
+         dpi = 600,
+         bg = "white")
