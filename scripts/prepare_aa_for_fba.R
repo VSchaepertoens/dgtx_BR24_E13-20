@@ -116,7 +116,18 @@ ggsave(filename = "figures/aa_metabolites/aa_rates_reordered_data2.png",
   
 
 # window_specific dataset -------------------------------------------------
-
+  color_mapping_condition <- c(
+    # "E13" = "#FD8D3C",
+    # "E14" = "#9E9AC8",
+    # "E15" = "#F16913",
+    # "E16" = "#807DBA",
+    # "E17" = "#D94801",
+    # "E18" = "#6A51A3",
+    "Constant" = "#A63603",
+    "Temp. shifted" = "#54278F"
+  )
+  
+  
 rates <- read_csv("data/rates_05032025/rates_mM_gDCW_h_new.csv")
   
   # Create the plot
@@ -131,7 +142,7 @@ rates <- read_csv("data/rates_05032025/rates_mM_gDCW_h_new.csv")
       width = 0.2,  # Control the width of the error bars (adjust as necessary)
       linewidth = 0.25  # Control line thickness
     ) +
-    # scale_color_manual(values = color_mapping_experiment) +  # Customize colors
+    scale_color_manual(values = color_mapping_condition) +  # Customize colors
     facet_wrap(~ Metabolite, nrow = 6, scales = "free_y") + # Facet by AA_meta, independent y scales
     theme_minimal()
   
