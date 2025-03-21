@@ -6,8 +6,11 @@ library(ComplexHeatmap)
 library(ggpattern)
 
 # load data -------------------------------------------------------
-subfolders <- c("E17_originator_TB_KB_trypsin", 
-                "ptm_E13toE18_originator_TB_KB_trypsin.presets")
+subfolders <- c(
+                "E17_originator_TB_KB_trypsin",
+                "ptm_E13toE18_originator_TB_KB_trypsin.presets",
+                "ptm_E19_E20"
+                )
 
 # stats for individual sample -------------------------------
 for (subfolder in subfolders) {
@@ -18,14 +21,14 @@ for (subfolder in subfolders) {
 
   data <- read_csv(data_path) %>%
     select(
-      "MS\r\nAlias name", 
-      "Group", 
+      "MS\r\nAlias name",
+      "Group",
       "Protein\r\nname",
-      "Sequence", 
-      "Mod.\r\nSummary", 
-      "Glycans", 
+      "Sequence",
+      "Mod.\r\nSummary",
+      "Glycans",
       "Labels",
-      "z", 
+      "z",
       "Total XIC AUC\r\nAveragine",
       "Validate",
       "Digest\r\nname"
@@ -34,7 +37,7 @@ for (subfolder in subfolders) {
     mutate(glycans = case_when(
       labels == "unglycosylated" ~ "unglycosylated",
       TRUE ~ glycans
-    )) 
+    ))
 
 # sum up xic averagine for multiple charge states
 data_summed <- data %>%
@@ -66,8 +69,8 @@ data_summed <- data_summed %>%
                   ),
          sep = "_",
          remove = FALSE) %>%
-  mutate(experiment_timepoint = paste(experiment, 
-                                      timepoint, 
+  mutate(experiment_timepoint = paste(experiment,
+                                      timepoint,
                                       sep = "_")) %>%
   {.}
 
@@ -90,11 +93,11 @@ p <- ggplot(data_summed, aes(x = labels, y = frac_abud)) +
         legend.text = element_text(size = 6))
 plot(p)
 
-output_data_path <- paste0("analysis/peptide_mapping/", 
-                           subfolder, 
+output_data_path <- paste0("analysis/peptide_mapping/",
+                           subfolder,
                            "/results_table_nglycans_REEQYnSTYRV.csv")
 
-write_csv(data_summed, 
+write_csv(data_summed,
           output_data_path)
 }
 
@@ -120,6 +123,8 @@ for (subfolder in subfolders) {
   abundance_data <- rbind(abundance_data,
                           data)
 }
+
+print(unique(abundance_data$experiment))
 
 # mean + sd of biological replicates
 abundance_data_summed <- abundance_data %>%
@@ -151,8 +156,10 @@ color_mapping <- c(
     "E17_288" = "#D94801",
     "E18_144" = "#6A51A3",
     "E18_288" = "#6A51A3",
-    "E19" = "#A63603",
-    "E20" = "#54278F",
+    "E19_144" = "#A63603",
+    "E19_288" = "#A63603",
+    "E20_144" = "#54278F",
+    "E20_288" = "#54278F",
     "NISTMAB_TB_288" = "#1b9e77",
     "NISTMAB_KB_288" = "#e7298a"
   )
@@ -166,10 +173,12 @@ plot_per_timepoint <- function(in_data,
   in_data <- in_data %>%
     mutate(experiment_timepoint = factor(experiment_timepoint, levels = c("E13_144","E13_288", 
                                                                           "E15_144","E15_288", 
-                                                                          "E17_144","E17_288", 
+                                                                          "E17_144","E17_288",
+                                                                          "E19_144","E19_288",
                                                                           "E14_144","E14_288", 
                                                                           "E16_144","E16_288", 
-                                                                          "E18_144","E18_288", 
+                                                                          "E18_144","E18_288",
+                                                                          "E20_144","E20_288",
                                                                           "NISTMAB_TB_288", "NISTMAB_KB_288")))
   if (wo_originator) {
   in_data <- in_data %>% filter(!(experiment_timepoint %in% c("NISTMAB_TB_288", "NISTMAB_KB_288")))
@@ -331,9 +340,11 @@ plot_per_glycan <- function(in_data,
     mutate(experiment_timepoint = factor(experiment_timepoint, levels = c("E13_144","E13_288", 
                                                                           "E15_144","E15_288", 
                                                                           "E17_144","E17_288", 
+                                                                          "E19_144","E19_288",
                                                                           "E14_144","E14_288", 
                                                                           "E16_144","E16_288", 
-                                                                          "E18_144","E18_288", 
+                                                                          "E18_144","E18_288",
+                                                                          "E20_144","E20_288",
                                                                           "NISTMAB_TB_288", "NISTMAB_KB_288")))
   if (wo_originator) {
     in_data <- in_data %>% filter(!(experiment_timepoint %in% c("NISTMAB_TB_288", "NISTMAB_KB_288")))
@@ -400,15 +411,15 @@ ggsave(filename = "figures/peptide_mapping/per_glycans_EEQNSTYR_E13_E14_288_out_
 
 # plot data biological replicates mean as a heatmap --------------------------------------------------
 data.matrix <- abundance_data_summed %>%
-  select(labels, mean_frac_abud, CHO_cell_variant_bio_replicate) %>%
-  pivot_wider(names_from = CHO_cell_variant_bio_replicate, values_from = mean_frac_abud) %>%
+  select(labels, mean_frac_abud, experiment_timepoint) %>%
+  pivot_wider(names_from = experiment_timepoint, values_from = mean_frac_abud) %>%
   column_to_rownames("labels") %>%
   # arrange(c(7,8, 9, 10, 11, 12, 4, 3, 6, 5, 1, 2)) %>%
   as.matrix()
 
 ## calculate z-score & plot heatmap -------------------------------------
 
-# scaled.data.matrix = t(scale(t(data.matrix))) # for scaling by row  
+scaled.data.matrix = t(scale(t(data.matrix))) # for scaling by row
 
 #check for sanity
 mean(data.matrix[1,])
@@ -458,15 +469,15 @@ ht_opt(
 #     res = 600)
 
 
-draw(Heatmap(data.matrix,
+draw(Heatmap(scaled.data.matrix,
              col = rev(rainbow(10)),
              cluster_rows = FALSE,
              rect_gp = gpar(col = "white", lwd = 2),
              name = "fractional abundance",
              row_gap = unit(4, "pt"),
              column_gap = unit(4, "pt"),
-             width = unit(4, "mm") * ncol(data.matrix) + 5 * unit(4, "pt"), # to make each cell a square
-             height = unit(4, "mm") * nrow(data.matrix) + 5 * unit(4, "pt"), # to make each cell a square
+             width = unit(4, "mm") * ncol(scaled.data.matrix) + 5 * unit(4, "pt"), # to make each cell a square
+             height = unit(4, "mm") * nrow(scaled.data.matrix) + 5 * unit(4, "pt"), # to make each cell a square
              show_row_names = TRUE,
              heatmap_legend_param = list(direction = "horizontal")
 ),
