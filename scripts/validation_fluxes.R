@@ -1,7 +1,7 @@
 library(tidyverse)
 library(ggpubr)
 
-measured_fluxes <- read_csv("data/aa_rates_reordered_data2.csv")
+measured_fluxes <- read_csv("data/rates_condition_specific/aa_rates_reordered_data2.csv")
 
 color_mapping_experiment <- c(
   "E13" = "#FD8D3C",
@@ -43,6 +43,9 @@ metabolite_reaction_pairs <- list(
 
 # plot 1 ------------------------------------------------------------------
 
+# Initialize an empty list to store data frames
+mp_fluxes_list <- list()
+
 # Loop over the named list
 for (metabolite in names(metabolite_reaction_pairs)) {
   
@@ -78,17 +81,33 @@ for (metabolite in names(metabolite_reaction_pairs)) {
   
   # plot(p)
   
-  ggsave(filename = paste0("figures/fba/pfba_fba_fva/validation_fluxes/",metabolite,".png"),
-         plot = p,
-         height = 120,
-         width = 200,
-         units = "mm",
-         dpi = 600,
-         bg = "white") 
+  # ggsave(filename = paste0("figures/fba/pfba_fba_fva/validation_fluxes/",metabolite,".png"),
+  #        plot = p,
+  #        height = 120,
+  #        width = 200,
+  #        units = "mm",
+  #        dpi = 600,
+  #        bg = "white") 
+  
+  # Store in list
+  mp_fluxes_list[[metabolite]] <- mp_fluxes_metabolite
 }
 
 
+# Combine all data frames into a single one
+mp_fluxes_all <- bind_rows(mp_fluxes_list, .id = "Metabolite")
+
+mp_fluxes_all_wider <- mp_fluxes_all %>%
+  pivot_wider(names_from = Type,
+              values_from = c("Rate", "SD")) %>%
+  mutate(Window = as.character(Window))
+
 # plot 2: dotplot per reaction:metabolite --------------------------------
+mp_fluxes_metabolite_wider <- mp_fluxes_metabolite %>%
+  pivot_wider(names_from = Type,
+              values_from = c("Rate", "SD")) %>%
+  mutate(Window = as.character(Window))
+
 
 # Calculate the overall range for both axes, considering SD and adding a buffer
 limits_x <- range(
@@ -97,18 +116,12 @@ limits_x <- range(
     mp_fluxes_metabolite_wider$Rate_pFBA_Flux), na.rm = TRUE
 )
 
+
 # Add a buffer (e.g., 5%) to the range
 buffer_x <- 0.05 * (limits_x[2] - limits_x[1])
 
 # Use the same limits for y-axis (since both axes should have the same range)
 limits_y <- limits_x  # Set y-axis limits same as x-axis limits
-
-
-mp_fluxes_metabolite_wider <- mp_fluxes_metabolite %>%
-  pivot_wider(names_from = Type,
-              values_from = c("Rate", "SD")) %>%
-  mutate(Window = as.character(Window))
-
 # Define abline parameters
 abline_params <- list(
   geom_abline(intercept = 0, slope = 1, linewidth = 0.5),
