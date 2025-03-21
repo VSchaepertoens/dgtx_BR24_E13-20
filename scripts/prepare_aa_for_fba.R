@@ -128,7 +128,7 @@ ggsave(filename = "figures/aa_metabolites/aa_rates_reordered_data2.png",
   )
   
   
-rates <- read_csv("data/rates_05032025/rates_mM_gDCW_h_new.csv")
+rates <- read_csv("data/rates_05032025/rates_mM_gDCW_h.csv")
   
   # Create the plot
   ggplot(data = rates, aes(x = Window, y = rate_mM_gDCW_h, color = Condition)) +
@@ -146,7 +146,7 @@ rates <- read_csv("data/rates_05032025/rates_mM_gDCW_h_new.csv")
     facet_wrap(~ Metabolite, nrow = 6, scales = "free_y") + # Facet by AA_meta, independent y scales
     theme_minimal()
   
-  ggsave(filename = "figures/aa_metabolites/rates_mM_gDCW_h_new.png",
+  ggsave(filename = "figures/aa_metabolites/rates_mM_gDCW_h.png",
          width = 210,
          height = 150, 
          units = "mm",
