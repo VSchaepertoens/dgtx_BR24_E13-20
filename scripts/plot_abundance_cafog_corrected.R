@@ -5,6 +5,7 @@ library(circlize)
 library(RColorBrewer)
 library(fs)
 library(WriteXLS)
+library(compositions)
 
 # load cafog corrected data -----------------------------------------------
 
@@ -108,6 +109,16 @@ data.matrix <- corr_abundance_data %>%
   column_to_rownames('glycoform1') %>%
   as.matrix() 
 
+
+# filter 144 and 288 tp (just as a comparison with peptide mapping)
+data.matrix <- corr_abundance_data %>%
+  filter(timepoint %in% c("144", "288")) %>%
+  select(glycoform1, corr_abundance, experiment_tp) %>%
+  pivot_wider(values_from = corr_abundance,
+              names_from = experiment_tp) %>%
+  column_to_rownames('glycoform1') %>%
+  as.matrix() 
+
 # Set all negative values to 0
 data.matrix[data.matrix < 0] <- 0
 
@@ -129,12 +140,27 @@ meta <- tibble(sample_name = colnames(data.matrix)) %>%
     experiment %in% c('E13', 'E15', 'E17', 'E19') ~ 'constant',
     experiment %in% c('E14', 'E16', 'E18', 'E20') ~ 'tshifted',
     TRUE ~ 'other'  # This handles any other experiments, if applicable
+  ),bioprocess_batch = case_when(
+    experiment %in% c('E13', 'E14', 'E15', 'E16') ~ '1',
+    experiment %in% c('E17', 'E18', 'E19', 'E20') ~ '2',
+    TRUE ~ 'other'  # This handles any other experiments, if applicable
   ))
 
 save(log2_data.matrix, data.matrix, meta, file = "analysis/e13_e20_nglycans_TR.RData")
 # log2_data.matrix_TR <- log2_data.matrix
 # data.matrix_TR <- data.matrix
 
+# clr transformation
+clr_data.matrix <- clr(t(data.matrix))
+# Convert the CLR-transformed data back to a matrix
+clr_data.matrix <- t(as.matrix(clr_data.matrix))
+
+clr_data.matrix
+
+save(clr_data.matrix, clr_data.matrix, meta, file = "analysis/e13_e20_nglycans_clr.RData")
+
+
+##
 data.matrix_tosave <- data.matrix %>% 
   as.data.frame() %>%
   mutate(modcom = rownames(data.matrix)) 
@@ -340,3 +366,70 @@ ggsave(filename =  paste0("figures/corrected_frac_ab_barplot_over_time",which_ex
 
 plot_over_time(corr_abundance_data, which_experiment = c("E20"))
 
+
+# plot as heatmap ---------------------------------------------------------
+## calculate z-score & plot heatmap -------------------------------------
+
+scaled.data.matrix = t(scale(t(data.matrix))) # for scaling by row
+
+#check for sanity
+mean(data.matrix[1,])
+sd(data.matrix[1,])
+(data.matrix[1] - mean(data.matrix[1,]))/sd(data.matrix[1,])
+(data.matrix[1,2] - mean(data.matrix[1,]))/sd(data.matrix[1,])
+
+
+BASE_TEXT_SIZE_PT <- 9
+ht_opt(
+  simple_anno_size = unit(1.5, "mm"),
+  COLUMN_ANNO_PADDING = unit(1, "pt"),
+  DENDROGRAM_PADDING = unit(1, "pt"),
+  HEATMAP_LEGEND_PADDING = unit(1, "mm"),
+  ROW_ANNO_PADDING = unit(1, "pt"),
+  TITLE_PADDING = unit(2, "mm"),
+  heatmap_row_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+  heatmap_row_names_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+  heatmap_column_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+  heatmap_column_names_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+  legend_labels_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+  legend_title_gp = gpar(fontsize = BASE_TEXT_SIZE_PT),
+  legend_border = FALSE
+)
+
+#set the correct color scheme
+# min(scaled.data.matrix)
+# max(scaled.data.matrix)
+# f1 = colorRamp2(seq(-max(abs(data.matrix), na.rm = TRUE),
+#                     max(abs(data.matrix), na.rm = TRUE),
+#                     length = 9),
+#                 c("seagreen4",
+#                   "seagreen3",
+#                   "seagreen2",
+#                   "seagreen1",
+#                   "gold",
+#                   "darkorchid1",
+#                   "darkorchid2",
+#                   "darkorchid3",
+#                   "darkorchid4"),
+#                 space = "RGB")
+#set the correct color scheme
+# png(filename = "figures/Jan_2024/heatmap_scaled_cafog_corrected_reordered_SC.png",    
+#     height = 9,
+#     width = 8.89,
+#     units = "cm",
+#     res = 600)
+
+
+draw(Heatmap(scaled.data.matrix,
+             col = rev(rainbow(10)),
+             cluster_rows = FALSE,
+             rect_gp = gpar(col = "white", lwd = 2),
+             name = "fractional abundance",
+             row_gap = unit(4, "pt"),
+             column_gap = unit(4, "pt"),
+             width = unit(4, "mm") * ncol(scaled.data.matrix) + 5 * unit(4, "pt"), # to make each cell a square
+             height = unit(4, "mm") * nrow(scaled.data.matrix) + 5 * unit(4, "pt"), # to make each cell a square
+             show_row_names = TRUE,
+             heatmap_legend_param = list(direction = "horizontal")
+),
+heatmap_legend_side = "bottom")
