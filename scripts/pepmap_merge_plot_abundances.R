@@ -7,16 +7,17 @@ library(ggpattern)
 
 # load data -------------------------------------------------------
 subfolders <- c(
-                "E17_originator_TB_KB_trypsin",
-                "ptm_E13toE18_originator_TB_KB_trypsin.presets",
-                "ptm_E19_E20"
+                # "ptm_E13_E15_trypsin.presets"
+                "ptm_E16_E18_trypsin.presets"
+                # "ptm_E13toE18_originator_TB_KB_trypsin.presets",
+                # "ptm_E19_E20"
                 )
 
 # stats for individual sample -------------------------------
 for (subfolder in subfolders) {
   data_path <- paste0("analysis/peptide_mapping/", 
                       subfolder, 
-                      "/nglycans_results.csv")
+                      "/results_nglycans_all_peptides.csv")
   print(data_path)
 
   data <- read_csv(data_path) %>%
@@ -36,7 +37,12 @@ for (subfolder in subfolders) {
     clean_names() %>%
     mutate(glycans = case_when(
       labels == "unglycosylated" ~ "unglycosylated",
+      is.na(labels) ~ "unglycosylated",
       TRUE ~ glycans
+    )) %>%
+    mutate(labels = case_when(
+      glycans == "unglycosylated" ~ "unglycosylated",
+      TRUE ~ labels
     ))
 
 # sum up xic averagine for multiple charge states
@@ -71,8 +77,8 @@ data_summed <- data_summed %>%
          remove = FALSE) %>%
   mutate(experiment_timepoint = paste(experiment,
                                       timepoint,
-                                      sep = "_")) %>%
-  {.}
+                                      sep = "_")) 
+  
 
 # plot the abundance for a given experiment_timepoint, all replicates
 p <- ggplot(data_summed, aes(x = labels, y = frac_abud)) +
@@ -81,9 +87,9 @@ p <- ggplot(data_summed, aes(x = labels, y = frac_abud)) +
     ), position = position_dodge(width = 0.9),
     color = "black",
     linewidth = 0.1) +
-  facet_wrap(~ experiment_timepoint, nrow = 2) +
+  facet_wrap(~ experiment_timepoint, nrow = 3) +
   scale_y_continuous(name = "Fractional abundance (%)",
-                     limits = c(0, 80)) +
+                     limits = c(0, 100)) +
   scale_x_discrete(name = "N-glycosylation type",
                    guide = guide_axis(angle = 90)) +
   guides(fill = guide_legend(ncol = 4)) +
@@ -95,21 +101,36 @@ plot(p)
 
 output_data_path <- paste0("analysis/peptide_mapping/",
                            subfolder,
-                           "/results_table_nglycans_REEQYnSTYRV.csv")
+                           "/summed_results_all_peptides.csv")
 
 write_csv(data_summed,
           output_data_path)
 }
 
 
+# data on glycan types ----------------------------------------------------
+
+glycan_types <- data %>%
+  select(mod_summary,glycans,labels) %>%
+  unique()
+
+write_csv(glycan_types, 
+          "analysis/glycan_types.csv")
+
 # stats for biological replicates mean + sd -------------------------------
+subfolders <- c(
+  "ptm_E13_E15_trypsin.presets",
+  "ptm_E16_E18_trypsin.presets"
+  # "ptm_E13toE18_originator_TB_KB_trypsin.presets",
+  # "ptm_E19_E20"
+)
 
 abundance_data <- NULL
 
 for (subfolder in subfolders) {
   data_path <- paste0("analysis/peptide_mapping/", 
                       subfolder, 
-                      "/results_table_nglycans_REEQYnSTYRV.csv")
+                      "/summed_results_all_peptides.csv")
   
   print(data_path)
   
@@ -411,6 +432,7 @@ ggsave(filename = "figures/peptide_mapping/per_glycans_EEQNSTYR_E13_E14_288_out_
 
 # plot data biological replicates mean as a heatmap --------------------------------------------------
 data.matrix <- abundance_data_summed %>%
+  filter(!(experiment_timepoint %in% c("E13_288", "E14_288"))) %>%
   select(labels, mean_frac_abud, experiment_timepoint) %>%
   pivot_wider(names_from = experiment_timepoint, values_from = mean_frac_abud) %>%
   column_to_rownames("labels") %>%
@@ -470,8 +492,8 @@ ht_opt(
 
 
 draw(Heatmap(scaled.data.matrix,
-             col = rev(rainbow(10)),
-             cluster_rows = FALSE,
+             # col = rev(rainbow(10)),
+             cluster_rows = TRUE,
              rect_gp = gpar(col = "white", lwd = 2),
              name = "fractional abundance",
              row_gap = unit(4, "pt"),
