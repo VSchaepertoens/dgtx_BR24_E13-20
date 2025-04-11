@@ -6,6 +6,7 @@ library(RColorBrewer)
 library(fs)
 library(WriteXLS)
 library(compositions)
+library(ggpattern)
 
 # load cafog corrected data -----------------------------------------------
 
@@ -79,6 +80,8 @@ correct_order <- c("none/G0F",
                    "G1F/G2F",
                    "G2F/G2F")
 
+
+
 corr_abundance_data <- corr_abundance_data %>%
   # drop_na() %>%
   mutate(experiment = factor(experiment, 
@@ -123,7 +126,7 @@ data.matrix <- corr_abundance_data %>%
 data.matrix[data.matrix < 0] <- 0
 
 # Apply log2 transformation (adding 1 to avoid log2(0))
-log2_data.matrix <- log2(t(data.matrix + 1))
+log2_data.matrix <- log2(t(data.matrix + 1)) # should not be transposed, but actually it does not matter! Applies log2 to all numbers and does not care whether samples in rows or in columns. 
 
 #Perform log2 transformation
 log2_data.matrix <- t(as.matrix(log2_data.matrix))
@@ -368,7 +371,7 @@ plot_over_time(corr_abundance_data, which_experiment = c("E20"))
 
 
 # plot as heatmap ---------------------------------------------------------
-## calculate z-score & plot heatmap -------------------------------------
+# calculate z-score & plot heatmap 
 
 scaled.data.matrix = t(scale(t(data.matrix))) # for scaling by row
 
@@ -433,3 +436,279 @@ draw(Heatmap(scaled.data.matrix,
              heatmap_legend_param = list(direction = "horizontal")
 ),
 heatmap_legend_side = "bottom")
+
+
+
+# plot bars horizontally ----------------------------------------------------
+subset <- corr_abundance_data %>%
+  filter(timepoint %in% c("120", "336")) %>%
+  mutate(condition = case_when(
+    experiment %in% c("E13", "E15", "E17", "E19") ~ "Constant",
+    experiment %in% c("E14", "E16", "E18", "E20") ~ "Temp. shifted",
+    TRUE ~ NA_character_  # optional, for any experiments not matched
+    )
+  ) %>%
+  mutate(condition_tp = paste(condition, timepoint, sep = "_")) %>%
+  filter(experiment %in% c("E13", "E14", "E15", "E18", "E19", "E20"))
+  {}
+
+correct_order_coord_flip <- c("G2F/G2F",
+                              "G1F/G2F",
+                              "G1F/G1F",
+                              "G0F/G1F",
+                              "G0F/G0F",
+                              "G0/G0F",
+                              "G0/G0",
+                              "none/G2F",
+                              "none/G1F",
+                              "none/G0F"
+)
+
+color_mapping_condition <- c(
+"Constant" = "#E6641E",
+"Temp. shifted" = "#4B288C"
+)
+
+color_mapping_condition_tp <- c(
+  "Constant_120" = "#E6641E",
+  "Constant_336" = "#E6641E",
+  "Temp. shifted_120" = "#4B288C",
+  "Temp. shifted_336" = "#4B288C"
+  
+)
+
+subset_stats <- subset %>%
+  group_by(glycoform1, condition, timepoint) %>%
+  summarise(
+    mean_frac_ab = mean(corr_abundance),
+    sd_frac_ab = sd(corr_abundance)
+  ) %>%
+  ungroup() %>%
+  mutate(
+    glycoform1 = factor(glycoform1, 
+                        levels = correct_order_coord_flip),
+    pattern = ifelse(str_detect(timepoint, "336"), "none", "stripe"),
+    condition_tp = paste(condition, timepoint, sep = "_")
+  ) %>%
+  mutate(pattern = as.character(pattern))
+
+dodge <- position_dodge(width = 0.9)
+
+
+ggplot(subset_stats) +
+  geom_col_pattern(
+    aes(
+      x = glycoform1,
+      y = mean_frac_ab, 
+      fill = condition,               
+      group = condition_tp,              
+      pattern = timepoint,
+      pattern_density = timepoint
+      ),
+    color = "black",
+    position = dodge,
+    linewidth = 0.025,
+    pattern_fill = alpha("black", 0.5),  # Add transparency to the stripes
+    # pattern_fill = "black",  
+    pattern = "stripe",
+    pattern_spacing = 0.025,
+    pattern_angle = 45,
+    # pattern_density = 0.1
+  ) +
+  # geom_point(
+  #   data = subset,
+  #   aes(x = glycoform1,
+  #       y = corr_abundance,
+  #       group = condition_tp,
+  #       fill = condition,
+  #       ),
+  #   position = dodge,
+  #   color = "black",
+  #   size = 2,
+  #   shape = 21
+  # ) +
+  geom_errorbar(
+    data = subset_stats,
+    aes(
+      x = glycoform1,
+      ymin = mean_frac_ab - sd_frac_ab,
+      ymax = mean_frac_ab + sd_frac_ab,
+      group = condition_tp
+    ),
+    position = dodge,
+    width = 0.5,
+    linewidth = 0.25
+  ) +
+  scale_fill_manual(values = color_mapping_condition) +
+  xlab("") +
+  ylab("fractional abundance (%)") +
+  labs(title = "Hexose bias corrected glycoforms - intact") +
+  geom_hline(yintercept = 0, linewidth = .35) +
+  coord_flip() +
+  theme_bw() +
+  theme(text = element_text(size = 12,
+                            face = "bold",
+                            family = "sans"),
+        axis.text.y = element_text(colour = "black", hjust = 0.5),
+        axis.text = element_text(colour = "black"),
+        axis.ticks.y = element_blank(),
+        plot.title = element_text(hjust = 0.5),
+        legend.position = "top",
+        panel.border = element_blank(),
+        panel.grid.major.y = element_blank(),
+        panel.grid.minor = element_blank()
+        ) +
+  guides(
+    fill = guide_legend(title = "Condition",
+                        override.aes = list(pattern = "none")),  
+    pattern = guide_legend(title = "Timepoint",
+                          override.aes = list(fill = "white", color = "black"))  
+)
+  
+  
+ggsave("figures/corrected_frac_ab_tp_120_336_vertical_mean_sd_minusE17E16.png",
+  width = 170,
+  height = 150,
+  units = "mm",
+  dpi = 600,
+  bg = "transparent"
+  )
+
+
+# no coord flip -----------------------------------------------------------
+subset <- corr_abundance_data %>%
+  filter(timepoint %in% c("120", "336")) %>%
+  mutate(condition = case_when(
+    experiment %in% c("E13", "E15", "E17", "E19") ~ "Constant",
+    experiment %in% c("E14", "E16", "E18", "E20") ~ "Temp. shifted",
+    TRUE ~ NA_character_  # optional, for any experiments not matched
+  )
+  ) %>%
+  mutate(condition_tp = paste(condition, timepoint, sep = "_")) %>%
+  filter(experiment %in% c("E13", "E14", "E15", "E18", "E19", "E20"))
+
+correct_order <- c("none/G0F",
+                   "none/G1F",
+                   "none/G2F",
+                   "G0/G0",
+                   "G0/G0F",
+                   "G0F/G0F",
+                   "G0F/G1F",
+                   "G1F/G1F",
+                   "G1F/G2F",
+                   "G2F/G2F")
+
+
+color_mapping_condition <- c(
+  "Constant" = "#E6641E",
+  "Temp. shifted" = "#4B288C"
+)
+
+color_mapping_condition_tp <- c(
+  "Constant_120" = "#E6641E",
+  "Constant_336" = "#E6641E",
+  "Temp. shifted_120" = "#4B288C",
+  "Temp. shifted_336" = "#4B288C"
+  
+)
+
+subset_stats <- subset %>%
+  group_by(glycoform1, condition, timepoint) %>%
+  summarise(
+    mean_frac_ab = mean(corr_abundance),
+    sd_frac_ab = sd(corr_abundance)
+  ) %>%
+  ungroup() %>%
+  mutate(
+    glycoform1 = factor(glycoform1, 
+                        levels = correct_order),
+    pattern = ifelse(str_detect(timepoint, "336"), "none", "stripe"),
+    condition_tp = paste(condition, timepoint, sep = "_")
+  ) %>%
+  mutate(pattern = as.character(pattern))
+
+dodge <- position_dodge(width = 0.9)
+
+
+ggplot(subset_stats) +
+  geom_col_pattern(
+    aes(
+      x = glycoform1,
+      y = mean_frac_ab, 
+      fill = condition,               
+      group = condition_tp,              
+      pattern = timepoint,
+      pattern_density = timepoint
+    ),
+    # color = "black",
+    position = dodge,
+    linewidth = 0.025,
+    pattern_fill = alpha("black", 0.5),  # Add transparency to the stripes
+    # pattern_fill = "black",  
+    pattern = "stripe",
+    pattern_spacing = 0.025,
+    pattern_angle = 45,
+    # pattern_density = 0.1
+  ) +
+  # geom_point(
+  #   data = subset,
+  #   aes(x = glycoform1,
+  #       y = corr_abundance,
+  #       group = condition_tp,
+  #       fill = condition,
+  #   ),
+  #   position = dodge,
+  #   color = "black",
+  #   size = 2,
+  #   shape = 21
+  # ) +
+  geom_errorbar(
+    data = subset_stats,
+    aes(
+      x = glycoform1,
+      ymin = mean_frac_ab - sd_frac_ab,
+      ymax = mean_frac_ab + sd_frac_ab,
+      group = condition_tp
+    ),
+    position = dodge,
+    width = 0.5,
+    linewidth = 0.25
+  ) +
+  scale_fill_manual(values = color_mapping_condition) +
+  xlab("") +
+  ylab("fractional abundance (%)") +
+  labs(title = "Hexose bias corrected glycoforms - intact") +
+  geom_hline(yintercept = 0, linewidth = .35) +
+  # coord_flip() +
+  theme_bw() +
+  theme(text = element_text(size = 12,
+                            face = "bold",
+                            family = "sans"),
+        axis.text.y = element_text(colour = "black", hjust = 0.5),
+        axis.text = element_text(colour = "black"),
+        axis.ticks.y = element_blank(),
+        axis.text.x = element_text(angle = 90, 
+                                   vjust = .5, 
+                                   hjust = 1),
+        plot.title = element_text(hjust = 0.5),
+        legend.position = "top",
+        panel.border = element_blank(),
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank()
+  ) +
+  guides(
+    fill = guide_legend(title = "Condition",
+                        override.aes = list(pattern = "none")),  
+    pattern = guide_legend(title = "Timepoint",
+                           override.aes = list(fill = "white", color = "black"))  
+  )
+
+
+ggsave("figures/corrected_frac_ab_tp_120_336_horizontal_mean_sd_minusE17E16.png",
+       width = 150,
+       height = 150,
+       units = "mm",
+       dpi = 600,
+       bg = "transparent"
+)
+
