@@ -2,6 +2,7 @@ library(tidyverse)
 library(ComplexHeatmap)
 library(circlize)
 library(viridis)
+library(svglite)
 
 
 # load_data ---------------------------------------------------------------
@@ -238,15 +239,235 @@ ggsave("figures/subunit_quantification_4tp_4exp_tp_ordered.png",
 #        units = c("cm"),
 #        dpi = 600)
 
+# Line plots of relative abundances ---------------------------------------
+# Assuming df has columns: Sample, subunit, peak_area
+all_conditions <- c("E17")
+
+df_clean <- data %>%
+  # separate sample into condition and time (assuming format E13_120)
+  tidyr::separate(Sample, into = c("Experiment", "Time"), sep = "_") %>%
+  complete(Experiment = all_conditions,
+           Time,
+           subunit,
+           fill = list(rel_area = 0)) %>%
+  mutate(Time = as.numeric(Time),
+         Experiment = factor(Experiment, levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20"))) %>%
+  mutate(Condition = case_when(
+    Experiment %in% c('E13', 'E15', 'E17', 'E19') ~ 'Constant',
+    Experiment %in% c('E14', 'E16', 'E18', 'E20') ~ 'Temp. shifted',
+    TRUE ~ 'other'
+    )) 
+
+
+# Line plot
+ggplot(df_clean, aes(x = Time, 
+                     y = peak_area, 
+                     color = subunit, 
+                     group = subunit)) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  facet_wrap(~Experiment, nrow = 2) +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(angle = 45)) +
+  labs(x = "Time", y = "Relative peak area (%)",
+       title = "Subunit composition over time",
+       color = "Subunit")
+
+color_mapping_condition <- c(
+  # "E13" = "#FD8D3C",
+  # "E14" = "#9E9AC8",
+  # "E15" = "#F16913",
+  # "E16" = "#807DBA",
+  # "E17" = "#D94801",
+  # "E18" = "#6A51A3",
+  "Constant" = "#A63603",
+  "Temp. shifted" = "#54278F"
+)
+
+# Line plot, facet per subunit
+ggplot(df_clean, aes(x = Time, 
+                     y = peak_area, 
+                     color = Condition)) +
+  geom_point(aes(shape = Experiment),
+             size = 1,
+             alpha = 0.5) +
+  geom_line(aes(group = Experiment), alpha = 0.3) + #“Trend lines show locally weighted regression fits (LOESS) with no confidence interval (se = FALSE).”
+  geom_smooth(size = 1.2, se = FALSE, alpha = 0.9) +
+  geom_vline(aes(xintercept = 146, linetype = "Temp. shift"),
+             color = "#58A787", linewidth = 1) +
+  scale_linetype_manual(values = c("Temp. shift" = "dashed"), name = "Event") +
+  # geom_vline(xintercept = 146, color = "#5EA38A", linetype = "dashed", linewidth = 0.75) +  # Highlight y = 0 line
+  scale_color_manual(values = color_mapping_condition) +
+  scale_shape_manual(values = 1:nlevels(df_clean$Experiment)) +
+  # annotate("text",
+  #          x = 146,
+  #          y = max(df_clean$peak_area-2, na.rm = TRUE),
+  #          label = "37°->32°C",
+  #          vjust = -0.5,
+  #          color = "#5EA38A",
+  #          size = 3) +
+  # scale_y_continuous(limits = c(0, NA), expand = c(0,0)) +
+  # scale_x_continuous(limits = c(100, 400), expand = c(0,0)) +
+  # scale_y_continuous(limits = c(0, NA)) +
+  facet_wrap(~subunit, ncol = 1, scales = "free_y") +
+  theme_bw(base_size = 12) +
+  theme(axis.text = element_text(color = "black"),
+        strip.background = element_blank(),
+        strip.text = element_text(face = "bold"),
+        panel.grid.minor = element_blank(),
+        # panel.border = element_blank(),
+        panel.border = element_rect(color = "grey70", fill = NA, linewidth = 0.5),
+        axis.ticks = element_blank(),
+        # axis.line = element_line(color = "black")
+        ) +
+  labs(x = "Time [h]", y = "Relative peak area (%)",
+       title = "Subunit composition over time",
+       color = "Condition")
+
+
+ggsave("figures/subunit_quantification/subunit_line.pdf",
+       width = 6,
+       height = 6,
+       dpi = 600,
+       bg = "white")
+
+ggsave("figures/subunit_quantification/subunit_line.png",
+       width = 6,
+       height = 6,
+       dpi = 600,
+       bg = "white")
+# Area plots (like stacked lines) -----------------------------------------
+
+ggplot(df_clean, aes(x = Time, y = peak_area, fill = subunit)) +
+  geom_area(alpha = 0.8, color = "black", size = 0.2) +
+  facet_wrap(~Experiment, nrow = 2) +
+  theme_minimal(base_size = 11) +
+  theme(axis.text.x = element_text(angle = 45)) +
+  labs(x = "Time", y = "Relative peak area (%)",
+       title = "Stacked area plot of subunit composition",
+       fill = "Subunit")
+
+# load titer data ---------------------------------------------------------
+
+octet_data <- read_csv("data/20240604_CharRun_Sum_ViCell_Titer_R_export.csv") %>%
+  select(TP, Experiment, Hours, Titer, Group) %>%
+  filter(Titer != "#N/A") %>%
+  mutate(across(Titer, as.numeric)) %>%
+  mutate(TP = str_replace(TP, "TP", "")) %>%
+  mutate(across(TP, as.numeric))
+
+selected_titer <- octet_data %>%
+  filter(TP %in% c(14, 28, 39, 46)) %>%
+  filter(Experiment %in% c("E13","E14", "E19", "E20")) %>%
+  mutate(hours_round = trunc(Hours)) %>%
+  mutate(experiment_tp = paste(Experiment, hours_round, sep = "_")) %>%
+  select(experiment_tp, Titer)
+
+#need to use here a different timepoint, because the 336 timepoint is not present
+E13_selected_titer <- octet_data %>%
+  filter(TP %in% c(51)) %>%
+  filter(Experiment %in% c("E13")) %>%
+  mutate(hours_round = 336) %>%
+  # mutate(hours_round = trunc(Hours)) %>%
+  mutate(experiment_tp = paste(Experiment, hours_round, sep = "_")) %>%
+  select(experiment_tp, Titer)
+
+selected_titer <- rbind(selected_titer,E13_selected_titer)
+
+ggplot(selected_titer,aes(y = experiment_tp, x = Titer)) +
+  geom_point() +
+  geom_segment(aes(y = experiment_tp, yend = experiment_tp, x = 0, xend = Titer))
 
 
 
+# combining the two plots -------------------------------------------------
+
+library(ggplot2)
+library(dplyr)
+library(stringr)
+library(cowplot) # or use patchwork
+
+# Your existing barplot
+p_bar <- ggplot(selected_data, aes(y = Sample, x = peak_area, fill = subunit)) + 
+  geom_bar(stat = "identity", position = "fill", width = 0.7) +
+  xlab("Proportion (%)") +
+  ylab("") +
+  scale_fill_brewer(palette = "Accent") +
+  scale_y_discrete(limits = rev(unique(selected_data$Sample))) + 
+  theme_minimal() +
+  theme(
+    text = element_text(size = 10, 
+                        face = "bold",
+                        family = "sans"),
+    axis.text = element_text(colour = "black"),
+    panel.background = element_blank(),
+    axis.text.y = element_text(margin = margin(r = 0)),
+    axis.ticks.y = element_blank(),
+    legend.title = element_blank(),
+    legend.position = "top",
+    panel.border = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor = element_blank()
+  )
+
+ plot(p_bar)
+
+ # Ensure the sample order matches
+ selected_titer$Sample <- factor(selected_titer$experiment_tp, levels = rev(unique(selected_data$Sample)))
+ 
+
+ p_lollipop <- ggplot(selected_titer, aes(x = Titer, y = Sample)) +
+   geom_segment(aes(xend = Titer, yend = Sample, x = 0), color = "black") +
+   # geom_linerange(aes(xmin = 0, xmax = Titer, y = Sample), color = "black", linewidth = 0.5)+
+   geom_point(size = 3, color = "black") +
+   scale_x_reverse(position = "top") + 
+   scale_y_discrete(limits = rev(unique(selected_data$Sample))) +
+   xlab("Titer (µg/mL)") +
+   ylab(NULL) +
+   theme_minimal() +
+   theme(
+     axis.text.y = element_blank(),  # Hide y-axis labels
+     # axis.ticks.y = element_blank(),
+     # panel.grid.major.y = element_blank(),
+     panel.grid.minor.x = element_blank(),
+     
+     text = element_text(size = 10, 
+                         face = "bold",
+                         family = "sans"),
+     axis.text = element_text(colour = "black"),
+     panel.background = element_blank(),
+     # axis.text.y = element_text(margin = margin(r = 0)),
+     axis.ticks.y = element_blank(),
+     legend.title = element_blank(),
+     legend.position = "bottom",
+     panel.border = element_blank(),
+     panel.grid.major.y = element_blank(),
+     panel.grid.minor = element_blank()
+   )
+ 
 
 
+ plot(p_lollipop) 
 
+ combined <- plot_grid(p_bar, 
+                       p_lollipop, 
+                       align = "h",
+                       nrow = 1, 
+                       rel_widths = c(1, 0.5))
+ 
 
+ print(combined)
+ggsave("figures/subunit_quantification/subunit_quantification_4tp_4exp_titer.png",
+       width = 6,
+       height = 4,
+       dpi = 300,
+       bg = "white")
 
-
+ggsave("figures/subunit_quantification/subunit_quantification_4tp_4exp_titer.pdf",
+       width = 6,
+       height = 4,
+       dpi = 300,
+       bg = "white")
 
 
 
