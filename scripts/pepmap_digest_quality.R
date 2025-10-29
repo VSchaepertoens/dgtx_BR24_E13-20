@@ -41,7 +41,7 @@ for (subfolder in subfolders) {
     group_by(experiment, timepoint, protein_name) %>%
     summarise(mean_percent = mean(protein_coverage_percent),
               sd_percent = sd(protein_coverage_percent)) %>%
-    mutate(timepoint = ifelse(timepoint == "500ng" | timepoint == "T", "288", timepoint),
+    mutate(timepoint = ifelse(timepoint == "500ng" | timepoint == "T", "harvest", timepoint),
           experiment = ifelse(experiment == "NISTMAb" , "NISTMAB_TB", experiment),
           experiment = ifelse(experiment == "Trypsin" , "NISTMAB_KB", experiment),
           experiment_timepoint = paste(experiment, timepoint, sep = "_"))
@@ -96,6 +96,41 @@ ggplot(protein_coverage_all, aes(x = experiment_timepoint, y = mean_percent, fil
 
 ggsave("figures/peptide_mapping/protein_coverage.png",
        width = 150,
+       height = 150,
+       units = "mm",
+       dpi = 300)
+
+
+data_to_plot <- protein_coverage_all %>% filter((experiment %in% c("NISTMAB_TB", "NISTMAB_KB")))
+
+ggplot(data_to_plot, aes(x = experiment_timepoint, y = mean_percent, fill = experiment)) +
+  geom_col(
+    position = position_dodge(width = 0.9)
+  ) + 
+  geom_hline(yintercept = 60, linetype = "dashed", color = "black", linewidth = 0.75) +
+  geom_errorbar(
+    aes(
+      ymin = mean_percent - sd_percent,
+      ymax = mean_percent + sd_percent,
+      group = experiment_timepoint
+    ),
+    position = position_dodge(.9),
+    width = .5,
+    linewidth = .25
+  ) +
+  scale_fill_manual(values = color_mapping_experiment) +
+  scale_y_continuous(name = "protein_coverage [%]",
+                     limits = c(0,100)) +
+  scale_x_discrete(name = "") +
+  facet_wrap(~protein_name, ncol = 1) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.position = "none"
+  )
+
+ggsave("figures/peptide_mapping/protein_coverage_reference.png",
+       width = 50,
        height = 150,
        units = "mm",
        dpi = 300)
