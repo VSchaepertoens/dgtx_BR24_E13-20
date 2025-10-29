@@ -370,6 +370,93 @@ ggsave(filename =  paste0("figures/corrected_frac_ab_barplot_over_time",which_ex
 plot_over_time(corr_abundance_data, which_experiment = c("E20"))
 
 
+# plot lineplots  ---------------------------------------------------------
+corrected_abundance_data <- corr_abundance_data %>%
+  # separate sample into condition and time (assuming format E13_120)
+  # tidyr::separate(Sample, into = c("Experiment", "Time"), sep = "_") %>%
+  # complete(Experiment = all_conditions,
+  #          Time,
+  #          subunit,
+  #          fill = list(rel_area = 0)) %>%
+  mutate(timepoint = as.numeric(timepoint),
+         experiment = factor(experiment, levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20"))) %>%
+  mutate(condition = case_when(
+    experiment %in% c('E13', 'E15', 'E17', 'E19') ~ 'Constant',
+    experiment %in% c('E14', 'E16', 'E18', 'E20') ~ 'Temp. shifted',
+    TRUE ~ 'other'
+  ))
+
+save(corrected_abundance_data, file = "analysis/charrun_E13-E14-E15-E16-E17-E18-E19-E20_CQA_V01_20250930_VS.RData")
+
+color_mapping_condition <- c(
+  # "E13" = "#FD8D3C",
+  # "E14" = "#9E9AC8",
+  # "E15" = "#F16913",
+  # "E16" = "#807DBA",
+  # "E17" = "#D94801",
+  # "E18" = "#6A51A3",
+  "Constant" = "#A63603",
+  "Temp. shifted" = "#54278F"
+)
+# Line plot, facet per subunit
+ggplot(corrected_abundance_data, aes(x = timepoint, 
+                     y = corr_abundance, 
+                     color = condition)) +
+  geom_point(aes(shape = experiment),
+             size = 1,
+             alpha = 0.5) +
+  geom_line(aes(group = experiment), alpha = 0.3) +
+  # geom_smooth(size = 1.2, se = FALSE, alpha = 0.9) +
+  geom_smooth(
+    # aes(fill = condition),
+    method = "lm",
+    formula = y ~ splines::ns(x, df = 3),
+    se = FALSE,
+    alpha = 0.2
+  ) +
+  geom_vline(aes(xintercept = 146, linetype = "Temp. shift"),
+             color = "#58A787", linewidth = 1) +
+  scale_linetype_manual(values = c("Temp. shift" = "dashed"), name = "Event") +
+  # geom_vline(xintercept = 146, color = "#5EA38A", linetype = "dashed", linewidth = 0.75) +  # Highlight y = 0 line
+  scale_color_manual(values = color_mapping_condition) +
+  scale_shape_manual(values = 1:nlevels(corrected_abundance_data$experiment)) +
+  # annotate("text",
+  #          x = 146,
+  #          y = max(df_clean$peak_area-2, na.rm = TRUE),
+  #          label = "37°->32°C",
+  #          vjust = -0.5,
+  #          color = "#5EA38A",
+  #          size = 3) +
+  # scale_y_continuous(limits = c(0, NA), expand = c(0,0)) +
+  # scale_x_continuous(limits = c(100, 400), expand = c(0,0)) +
+  # scale_y_continuous(limits = c(0, NA)) +
+  facet_wrap(~glycoform1, ncol = 2, scales = "free_y") +
+  theme_bw(base_size = 12) +
+  theme(axis.text = element_text(color = "black"),
+        strip.background = element_blank(),
+        strip.text = element_text(face = "bold"),
+        panel.grid.minor = element_blank(),
+        # panel.border = element_blank(),
+        panel.border = element_rect(color = "grey70", fill = NA, linewidth = 0.5),
+        axis.ticks = element_blank(),
+        # axis.line = element_line(color = "black")
+  ) +
+  labs(x = "Time [h]", y = "Fractional_abundance (%)",
+       title = "N-glycan composition over time",
+       color = "Condition",
+       shape = "Experiment")
+
+
+ggsave(filename =  paste0("figures/corrected_frac_ab_lineplot.pdf"),
+       height = 200,
+       width = 200,
+       units = "mm",
+       dpi = 600)
+ggsave(filename =  paste0("figures/corrected_frac_ab_lineplot.png"),
+       height = 200,
+       width = 200,
+       units = "mm",
+       dpi = 600)
 # plot as heatmap ---------------------------------------------------------
 # calculate z-score & plot heatmap 
 
@@ -553,8 +640,8 @@ ggplot(subset_stats) +
         axis.text = element_text(colour = "black"),
         axis.ticks.y = element_blank(),
         plot.title = element_text(hjust = 0.5),
-        legend.position = "top",
-        panel.border = element_blank(),
+        legend.position = "bottom",
+        # panel.border = element_blank(),
         panel.grid.major.y = element_blank(),
         panel.grid.minor = element_blank()
         ) +
@@ -585,7 +672,8 @@ subset <- corr_abundance_data %>%
   )
   ) %>%
   mutate(condition_tp = paste(condition, timepoint, sep = "_")) %>%
-  filter(experiment %in% c("E13", "E14", "E15", "E18", "E19", "E20"))
+  # filter(experiment %in% c("E13", "E14", "E15", "E18", "E19", "E20"))
+  {.}
 
 correct_order <- c("none/G0F",
                    "none/G1F",
@@ -650,30 +738,30 @@ ggplot(subset_stats) +
     pattern_angle = 45,
     # pattern_density = 0.1
   ) +
-  # geom_point(
-  #   data = subset,
-  #   aes(x = glycoform1,
-  #       y = corr_abundance,
-  #       group = condition_tp,
-  #       fill = condition,
-  #   ),
-  #   position = dodge,
-  #   color = "black",
-  #   size = 2,
-  #   shape = 21
-  # ) +
-  geom_errorbar(
-    data = subset_stats,
-    aes(
-      x = glycoform1,
-      ymin = mean_frac_ab - sd_frac_ab,
-      ymax = mean_frac_ab + sd_frac_ab,
-      group = condition_tp
+  geom_point(
+    data = subset,
+    aes(x = glycoform1,
+        y = corr_abundance,
+        group = condition_tp,
+        fill = condition,
     ),
     position = dodge,
-    width = 0.5,
-    linewidth = 0.25
+    color = "black",
+    size = 2,
+    shape = 21
   ) +
+  # geom_errorbar(
+  #   data = subset_stats,
+  #   aes(
+  #     x = glycoform1,
+  #     ymin = mean_frac_ab - sd_frac_ab,
+  #     ymax = mean_frac_ab + sd_frac_ab,
+  #     group = condition_tp
+  #   ),
+  #   position = dodge,
+  #   width = 0.5,
+  #   linewidth = 0.25
+  # ) +
   scale_fill_manual(values = color_mapping_condition) +
   xlab("") +
   ylab("fractional abundance (%)") +
@@ -681,20 +769,33 @@ ggplot(subset_stats) +
   geom_hline(yintercept = 0, linewidth = .35) +
   # coord_flip() +
   theme_bw() +
-  theme(text = element_text(size = 12,
-                            face = "bold",
-                            family = "sans"),
-        axis.text.y = element_text(colour = "black", hjust = 0.5),
-        axis.text = element_text(colour = "black"),
-        axis.ticks.y = element_blank(),
-        axis.text.x = element_text(angle = 90, 
-                                   vjust = .5, 
-                                   hjust = 1),
-        plot.title = element_text(hjust = 0.5),
-        legend.position = "top",
-        panel.border = element_blank(),
-        panel.grid.major.x = element_blank(),
-        panel.grid.minor.x = element_blank()
+  # theme(text = element_text(size = 12,
+  #                           face = "bold",
+  #                           family = "sans"),
+  #       axis.text.y = element_text(colour = "black", hjust = 0.5),
+  #       axis.text = element_text(colour = "black"),
+  #       axis.ticks.y = element_blank(),
+  #       axis.text.x = element_text(angle = 90, 
+  #                                  vjust = .5, 
+  #                                  hjust = 1),
+  #       plot.title = element_text(hjust = 0.5),
+  #       legend.position = "bottom",
+  #       # panel.border = element_blank(),
+  #       panel.grid.major.x = element_blank(),
+  #       panel.grid.minor.x = element_blank()
+  # ) +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    axis.title.x = element_text(size = 16, color = "black"),
+    axis.text.x = element_text(size = 16, color = "black", angle = 90, vjust = .5,hjust = 1),
+    axis.title.y = element_text(size = 16, color = "black"),
+    axis.text.y = element_text(size = 16, color = "black"),
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    legend.title = element_text(size = 16, face = "bold"),
+    legend.text = element_text(size = 16),
+    panel.grid.minor.x = element_blank(),
+    panel.grid.major.x = element_blank()
   ) +
   guides(
     fill = guide_legend(title = "Condition",
@@ -703,12 +804,73 @@ ggplot(subset_stats) +
                            override.aes = list(fill = "white", color = "black"))  
   )
 
-
-ggsave("figures/corrected_frac_ab_tp_120_336_horizontal_mean_sd_minusE17E16.png",
-       width = 150,
-       height = 150,
-       units = "mm",
+#stripes make thinner
+ggsave("figures/corrected_frac_ab_tp_120_336_horizontal_mean_sd_minusE17E16_10x6.png",
+       width = 10,
+       height = 6,
+       # units = "mm",
        dpi = 600,
        bg = "transparent"
 )
 
+# change from ggpattern to lighter and darker tones
+
+color_mapping_condition_tp <- c(
+  "Constant_120" = "#F0A278",
+  "Constant_336" = "#E6641E",
+  "Temp. shifted_120" = "#937EBA",
+  "Temp. shifted_336" = "#4B288C"
+)
+
+
+ggplot(subset_stats) +
+  geom_col(
+    aes(x = glycoform1,
+        y = mean_frac_ab,
+        fill = condition_tp),
+    position = dodge,
+  ) +
+  geom_point(
+    data = subset,
+    aes(x = glycoform1,
+        y = corr_abundance,
+        group = condition_tp,
+        fill = condition_tp,
+    ),
+    position = dodge,
+    color = "white",
+    size = 2,
+    shape = 21
+  ) +
+  scale_fill_manual(values = color_mapping_condition_tp) +
+  xlab("") +
+  ylab("fractional abundance (%)") +
+  labs(title = "Hexose bias corrected glycoforms - intact") +
+  geom_hline(yintercept = 0, linewidth = .35) +
+  scale_y_continuous(breaks = seq(0, 60, by = 10)) +
+  theme_classic() +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    axis.title.x = element_text(size = 16, color = "black"),
+    axis.text.x = element_text(size = 16, color = "black", angle = 90, vjust = .5,hjust = 1),
+    axis.title.y = element_text(size = 16, color = "black"),
+    axis.text.y = element_text(size = 16, color = "black"),
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    legend.title = element_text(size = 16, face = "bold"),
+    legend.text = element_text(size = 16),
+    panel.grid.minor.x = element_blank(),
+    panel.grid.major.x = element_blank()
+  ) +
+  guides(
+    fill = guide_legend(title = "Condition",
+                        override.aes = list(pattern = "none"))
+  )
+
+ggsave("figures/corrected_frac_ab_tp_120_336_horizontal_10x6_white_stroke_classic.png",
+       width = 10,
+       height = 6,
+       # units = "mm",
+       dpi = 600,
+       bg = "transparent"
+)
