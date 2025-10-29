@@ -8,7 +8,9 @@ library(ggpattern)
 # load data -------------------------------------------------------
 subfolders <- c(
                 # "ptm_E13_E15_trypsin.presets"
-                "ptm_E16_E18_trypsin.presets"
+                # "ptm_E16_E18_trypsin.presets",
+                "ptm_TB_KB_KB_wrong_trypsin.presets"
+                # "ptm_E19_E20_TB_KB_trypsin.presets"
                 # "ptm_E13toE18_originator_TB_KB_trypsin.presets",
                 # "ptm_E19_E20"
                 )
@@ -17,7 +19,9 @@ subfolders <- c(
 for (subfolder in subfolders) {
   data_path <- paste0("analysis/peptide_mapping/", 
                       subfolder, 
-                      "/results_nglycans_all_peptides.csv")
+                      # "/results_nglycans_other_peptides.csv")
+                      "/results_nglycans_eeqynstyr.csv")
+
   print(data_path)
 
   data <- read_csv(data_path) %>%
@@ -75,6 +79,11 @@ data_summed <- data_summed %>%
                   ),
          sep = "_",
          remove = FALSE) %>%
+  #Added only for the new NISTmAb data
+  mutate(timepoint = case_when(
+    experiment == "300ng" ~ "harvest",
+    TRUE ~ timepoint)
+  ) %>%
   mutate(experiment_timepoint = paste(experiment,
                                       timepoint,
                                       sep = "_")) 
@@ -102,6 +111,7 @@ plot(p)
 output_data_path <- paste0("analysis/peptide_mapping/",
                            subfolder,
                            "/summed_results_all_peptides.csv")
+                            # "/summed_results_REEQYnSTYRV.csv")
 
 write_csv(data_summed,
           output_data_path)
@@ -120,7 +130,8 @@ write_csv(glycan_types,
 # stats for biological replicates mean + sd -------------------------------
 subfolders <- c(
   "ptm_E13_E15_trypsin.presets",
-  "ptm_E16_E18_trypsin.presets"
+  "ptm_E16_E18_trypsin.presets",
+  "ptm_E19_E20_TB_KB_trypsin.presets"
   # "ptm_E13toE18_originator_TB_KB_trypsin.presets",
   # "ptm_E19_E20"
 )
@@ -130,7 +141,9 @@ abundance_data <- NULL
 for (subfolder in subfolders) {
   data_path <- paste0("analysis/peptide_mapping/", 
                       subfolder, 
-                      "/summed_results_all_peptides.csv")
+                      # "/summed_results_all_peptides.csv")
+                      "/summed_results_REEQYnSTYRV.csv")
+
   
   print(data_path)
   
@@ -147,6 +160,7 @@ for (subfolder in subfolders) {
 
 print(unique(abundance_data$experiment))
 
+
 # mean + sd of biological replicates
 abundance_data_summed <- abundance_data %>%
   group_by(experiment_timepoint, labels) %>%
@@ -158,9 +172,9 @@ abundance_data_summed <- abundance_data %>%
                     "timepoint"),
            sep = "_",
            remove = FALSE) %>%
-  mutate(timepoint = ifelse(timepoint == "500ng" | timepoint == "T", "288", timepoint),
+  mutate(timepoint = ifelse(timepoint == "500ng" | timepoint == "T", "harvest", timepoint),
          experiment = ifelse(experiment == "NISTMAb" , "NISTMAB_TB", experiment),
-         experiment = ifelse(experiment == "Trypsin" , "NISTMAB_KB", experiment),
+         experiment = ifelse(experiment == "300ng" , "NISTMAB_KB", experiment),
          experiment_timepoint = paste(experiment, timepoint, sep = "_"))
 
 # Define the colors from the "Paired" palette
@@ -181,9 +195,30 @@ color_mapping <- c(
     "E19_288" = "#A63603",
     "E20_144" = "#54278F",
     "E20_288" = "#54278F",
-    "NISTMAB_TB_288" = "#1b9e77",
-    "NISTMAB_KB_288" = "#e7298a"
+    "NISTMAB_TB_harvest" = "#1b9e77",
+    "NISTMAB_KB_harvest" = "#e7298a"
   )
+
+color_mapping_experiment <- c(
+  "E13" = "#FD8D3C",
+  # "E13_288" = "#FD8D3C",
+  "E14" = "#9E9AC8",
+  # "E14_288" = "#9E9AC8",
+  "E15" = "#F16913",
+  # "E15_288" = "#F16913",
+  "E16" = "#807DBA",
+  # "E16_288" = "#807DBA",
+  "E17" = "#D94801",
+  # "E17_288" = "#D94801",
+  "E18" = "#6A51A3",
+  # "E18_288" = "#6A51A3",
+  "E19" = "#A63603",
+  # "E19_288" = "#A63603",
+  "E20" = "#54278F",
+  # "E20_288" = "#54278F",
+  "NISTMAB_TB" = "#1b9e77",
+  "NISTMAB_KB" = "#e7298a"
+)
 
 
 # 1. per timepoint plots --------------------------------------------------
@@ -200,13 +235,16 @@ plot_per_timepoint <- function(in_data,
                                                                           "E16_144","E16_288", 
                                                                           "E18_144","E18_288",
                                                                           "E20_144","E20_288",
-                                                                          "NISTMAB_TB_288", "NISTMAB_KB_288")))
+                                                                          "NISTMAB_TB_harvest", "NISTMAB_KB_harvest")))
   if (wo_originator) {
-  in_data <- in_data %>% filter(!(experiment_timepoint %in% c("NISTMAB_TB_288", "NISTMAB_KB_288")))
+  in_data <- in_data %>% filter(!(experiment_timepoint %in% c("NISTMAB_TB_harvest", "NISTMAB_KB_harvest")))
+
+  } else {
+    in_data <- in_data %>% filter((experiment_timepoint %in% c("NISTMAB_TB_harvest","NISTMAB_KB_harvest")))
   }
                       
   p <- ggplot(in_data, aes(x = labels, y = mean_frac_abud)) +
-    geom_col(aes(fill = experiment_timepoint), 
+    geom_col(aes(fill = experiment,group = experiment_timepoint), 
              position = position_dodge(width = 0.9),
              color = "black",
              linewidth = 0.1) +
@@ -221,13 +259,15 @@ plot_per_timepoint <- function(in_data,
       linewidth = .25
     ) +
     facet_wrap(~ timepoint, 
-               nrow = 2,
-               labeller = as_labeller(c('144' = 'timepoint 144 hours', '288' = 'timepoint 288 hours'))
+               nrow = 3,
+               labeller = as_labeller(c('144' = 'timepoint 144 hours', '288' = 'timepoint 288 hours', 'harvest' = 'harvest'))
                ) +
-    scale_fill_manual(values = color_mapping) +
-    scale_y_continuous(name = "Fractional abundance (%)") +
+    scale_fill_manual(values = color_mapping_experiment) +
+    scale_y_continuous(name = "Fractional abundance (%)",
+                       limits = c(0,40)) +
     scale_x_discrete(name = "N-glycosylation type") +
     ggtitle("Per timepoint N-glycans fractional abundance of peptide R.EEQYnSTYR.V") +
+    # ggtitle("R.EEQYnSTYR.V, K.TKPREEQYnSTYR.V, K.PREEQYnSTYR.V") +
     theme_bw() +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
           legend.position = 'bottom',
@@ -237,11 +277,11 @@ plot_per_timepoint <- function(in_data,
 }
 
 plot_per_timepoint(in_data = abundance_data_summed)
-ggsave(filename = "figures/peptide_mapping/per_timepoint_EEQNSTYR_all.png",
+ggsave(filename = "figures/peptide_mapping/per_timepoint_EEQNSTYR_reference_KB.png",
        units = "cm",
        dpi = 300,
-       width = 20,
-       height = 20)
+       width = 17,
+       height = 10)
 plot_per_timepoint(in_data = abundance_data_summed,
                    wo_originator = TRUE)
 ggsave(filename = "figures/peptide_mapping/per_timepoint_EEQNSTYR_wo_originator.png",
@@ -249,7 +289,7 @@ ggsave(filename = "figures/peptide_mapping/per_timepoint_EEQNSTYR_wo_originator.
        dpi = 300,
        width = 20,
        height = 20)
-subset <- abundance_data_summed %>% filter(!(experiment_timepoint %in% c("E13_288", "E14_288"))) # filter out digests with many missed cleavages
+subset <- abundance_data_summed %>% filter(!(experiment_timepoint %in% c("E13_288", "E14_288","E18_288"))) # filter out digests with many missed cleavages
 plot_per_timepoint(in_data = subset)
 ggsave(filename = "figures/peptide_mapping/per_timepoint_EEQNSTYR_E13_E14_288_out.png",
        units = "cm",
@@ -369,6 +409,8 @@ plot_per_glycan <- function(in_data,
                                                                           "NISTMAB_TB_288", "NISTMAB_KB_288")))
   if (wo_originator) {
     in_data <- in_data %>% filter(!(experiment_timepoint %in% c("NISTMAB_TB_288", "NISTMAB_KB_288")))
+  } else {
+    in_data <- in_data %>% filter((experiment_timepoint %in% c("NISTMAB_TB_288", "NISTMAB_KB_288")))
   }
   
   p <- ggplot(in_data, aes(x = experiment_timepoint, y = mean_frac_abud)) +
@@ -415,7 +457,7 @@ ggsave(filename = "figures/peptide_mapping/per_glycan_EEQNSTYR_wo_originator.png
        dpi = 300,
        width = 30,
        height = 20)
-subset <- abundance_data_summed %>% filter(!(experiment_timepoint %in% c("E13_288", "E14_288"))) # filter out digests with many missed cleavages
+subset <- abundance_data_summed %>% filter(!(experiment_timepoint %in% c("E13_288", "E14_288", "E18_288"))) # filter out digests with many missed cleavages
 plot_per_glycan(in_data = subset)
 ggsave(filename = "figures/peptide_mapping/per_glycan_EEQNSTYR_E13_E14_288_out.png",
        units = "cm",
@@ -430,9 +472,49 @@ ggsave(filename = "figures/peptide_mapping/per_glycans_EEQNSTYR_E13_E14_288_out_
        width = 25,
        height = 20)
 
+
+# plot data technical replicates as data matrix ---------------------------
+data.matrix <- abundance_data %>%
+  filter(!(experiment_timepoint %in% c("E13_288", "E14_288","E18_288"))) %>%
+  # filter(!(labels %in% c("M3", "M4","M3F","M5","M5F", "M6", "M7", "M8"))) %>%
+  separate(experiment_timepoint,
+           into = c("experiment", 
+                    "timepoint"),
+           sep = "_",
+           remove = FALSE) %>%
+  mutate(timepoint = ifelse(timepoint == "500ng" | timepoint == "T", "288", timepoint),
+         experiment = ifelse(experiment == "NISTMAb" , "NISTMAB TB", experiment),
+         experiment = ifelse(experiment == "Trypsin" , "NISTMAB KB", experiment),
+         experiment_timepoint = paste(experiment, timepoint, sep = "_"),
+         experiment_timepoint_tr = paste(experiment_timepoint, technical_replicate, sep = "_")) %>%
+  select(labels, frac_abud, experiment_timepoint_tr) %>%
+  pivot_wider(names_from = experiment_timepoint_tr, values_from = frac_abud) %>%
+  column_to_rownames("labels") %>%
+  # arrange(c(7,8, 9, 10, 11, 12, 4, 3, 6, 5, 1, 2)) %>%
+  as.matrix()
+
+meta <- tibble(sample_name = colnames(data.matrix)) %>%
+  separate(col = sample_name,
+           into = c('experiment', 'timepoint', "technical_replicate"),
+           sep = "_",
+           remove = FALSE
+  ) %>%
+  mutate(condition = case_when(
+    experiment %in% c('E13', 'E15', 'E17', 'E19') ~ 'constant',
+    experiment %in% c('E14', 'E16', 'E18', 'E20') ~ 'tshifted',
+    TRUE ~ 'other'  # This handles any other experiments, if applicable
+  ),bioprocess_batch = case_when(
+    experiment %in% c('E13', 'E14', 'E15', 'E16') ~ '1',
+    experiment %in% c('E17', 'E18', 'E19', 'E20') ~ '2',
+    TRUE ~ 'other'  # This handles any other experiments, if applicable
+  ))
+
+save(data.matrix, meta, file = "analysis/pepmap_e13_e20_nglycans.RData")
+
 # plot data biological replicates mean as a heatmap --------------------------------------------------
 data.matrix <- abundance_data_summed %>%
-  filter(!(experiment_timepoint %in% c("E13_288", "E14_288"))) %>%
+  filter(!(experiment_timepoint %in% c("E13_288", "E14_288","E18_288","NISTMAB_KB_288","NISTMAB_TB_288"))) %>%
+  filter(!(labels %in% c("M3", "M4","M3F","M5","M5F", "M6", "M7", "M8"))) %>%
   select(labels, mean_frac_abud, experiment_timepoint) %>%
   pivot_wider(names_from = experiment_timepoint, values_from = mean_frac_abud) %>%
   column_to_rownames("labels") %>%
@@ -493,7 +575,8 @@ ht_opt(
 
 draw(Heatmap(scaled.data.matrix,
              # col = rev(rainbow(10)),
-             cluster_rows = TRUE,
+             cluster_rows = FALSE,
+             # cluster_columns = FALSE,
              rect_gp = gpar(col = "white", lwd = 2),
              name = "fractional abundance",
              row_gap = unit(4, "pt"),
