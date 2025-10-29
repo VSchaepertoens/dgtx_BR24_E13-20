@@ -32,7 +32,7 @@ ggplot(data = octet_data, mapping = aes(x = Hours, y = Titer, group = Experiment
   ) +
   theme_bw() +
   theme(
-    axis.text.x = element_text(size = 8, angle = 90, hjust = 1, vjust = 0.5),
+    axis.text.x = element_text(size = 8, angle = 45, hjust = 1, vjust = 0.5),
     axis.text = element_text(size = 10),
     axis.title = element_text(size = 14),
     plot.title = element_text(size = 14),
@@ -40,10 +40,14 @@ ggplot(data = octet_data, mapping = aes(x = Hours, y = Titer, group = Experiment
     legend.title = element_text(size = 14)
   ) 
 
-unique(round(octet_data$Hours, digits = 1))
+unique(round(octet_data$Hours, digits = 0))
 
 ggsave(filename = "figures/titer.png",    
        height = 160,
        width = 500,
        units = "mm",
        dpi = 600)
+
+selected_titer <- octet_data %>%
+  filter(TP %in% c(14, 28, 39, 46)) %>%
+
