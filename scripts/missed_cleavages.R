@@ -23,7 +23,7 @@ result_E17 <- data_filt %>%
   summarise(total_val = sum(total_xic_auc_averagine), .groups = "drop") %>% # Count occurrences
   pivot_wider(names_from = digest_missed_cleavages, values_from = total_val, values_fill = 0) %>% # Spread missed_cleavage into columns
   mutate(across(2:4, ~ . / rowSums(across(2:3)) * 100)) %>%
-  filter(grepl("E17", ms_alias_name)) %>%
+  filter(!grepl("E17", ms_alias_name)) %>%
   column_to_rownames("ms_alias_name")
   
 
