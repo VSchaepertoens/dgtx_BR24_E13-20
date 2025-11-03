@@ -1,6 +1,6 @@
 library(tidyverse)
 
-measured_fluxes <- read_csv("data/aa_rates_reordered_data2.csv")
+measured_fluxes <- read_csv("data/rates_nov24/aa_rates_reordered_data2.csv")
 
 # GROWTH rates ------------------------------------------
 ## MEASURED ##
