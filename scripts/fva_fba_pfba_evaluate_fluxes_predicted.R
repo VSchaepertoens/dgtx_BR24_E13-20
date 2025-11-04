@@ -51,7 +51,6 @@ combined_fva_data <- bind_rows(fva_data_list) %>%
 # load FBA and pFBA data -----------------------------------------------------------
 
 fba_data <- read_csv("fba_results/condition_specific/iCHO1766_biomass_producing/reaction_data_results_icho1766_FBA_pFBA.csv")
-
 # key glycolysis and igg production reactions --------------
 
 glycolysis_rxn <- c("HEX1", "PFK", "PGI", "GAPD", "TPI")
@@ -107,6 +106,39 @@ ggplot(filt_fba_data, aes(x = Reaction)) +
   theme_bw() +
   theme(axis.text.x = element_text(angle = 90))
 
+
+
+# reactions involving glycosylation ---------------------------------------
+
+galactosylation_rxn <- c("UGLT", "UDPGALt2g", "G14Tg","S26Tg", "S23T3g","igg_formation")
+sialylation_rxn <- c("S26Tg", "S23T3g", "CMPACNAtg", "CMPSAS", "ACNAMPH")
+fucosylation_rxn <- c("M16NT1g","M13N4T1g", "M16N6T3g", "F6Tg", "GDPFUCtg")
+nsd_fluxes <- c("UGLT","UDPG4E", "GALU","CMPSAS", "F1PGT", 
+                "GFUCS", "r0782","GMAND", "MAN1PT2", "r0208", "UAGDP", "UAG4E","UAGALDP")
+
+filt_fba_data <- fba_data %>%
+  filter(Reaction %in% nsd_fluxes) %>%
+  mutate(Reaction = factor(Reaction, levels = c("GALU", "UGLT", "UDPG4E", 
+                                                "CMPSAS",
+                                                "F1PGT","GFUCS", "r0782","GMAND",
+                                                "MAN1PT2", "r0208",
+                                                "UAGDP", "UAG4E","UAGALDP")))
+
+ggplot(filt_fba_data, aes(x = Reaction)) +
+  geom_point(aes(y = FBA_Flux), color = "blue") +
+  geom_point(aes(y = pFBA_Flux), color = "red") +
+  facet_grid(~Window) +
+  # ylim( -0.1, 0.5) +
+  # facet_wrap(~ Window, ncol = 5) +
+  # scale_color_manual(values = color_mapping_experiment) +
+  theme_bw() +
+  theme(axis.text.x = element_text(angle = 90))
+
+ggsave(filename = "figures/fba/pfba_fba_fva/condition_specific/nsd_fluxes_icho1766_biomass_producing.png",
+       height = 200,
+       width = 250,
+       units = "mm",
+       dpi = 600)
 
 # reshaping data ----------------------------------------------------------
 # Step 1: Reshape the data to wide format
