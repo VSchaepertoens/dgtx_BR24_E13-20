@@ -1,6 +1,6 @@
 library(tidyverse)
 
-# measured_fluxes <- read_csv("data/aa_rates_reordered_data2.csv")
+measured_fluxes <- read_csv("data/rates_nov24/aa_rates_reordered_data2.csv")
 
 # GROWTH rates ------------------------------------------
 ## MEASURED ##
@@ -43,11 +43,11 @@ mp_growth_rates_joined <- m_growth_rates  %>%
 
 
 # TITER rates ----------------------------
-## MEASURED ##
-  m_titer_rates <- measured_fluxes %>%
-    filter(AA_meta == "Titer") %>%
-    mutate(Type = "measured")%>%
-    select(!Condition)
+# MEASURED ##
+m_titer_rates <- measured_fluxes %>%
+  filter(AA_meta == "Titer") %>%
+  mutate(Type = "measured")%>%
+  select(!Condition)
 
 ## PREDICTED iCHO1766 ##
 p_titer_rates <- read_csv("fba_results/condition_specific/iCHO1766_igg/mus_results_icho1766_FBA_pFBA.csv") %>%
@@ -80,6 +80,30 @@ mp_titer_rates_joined <- m_titer_rates %>%
          ) %>%
   select(!c("Type.x", "Type.y")) %>%
   mutate(Window = as.character(Window))
+
+# Quantitative assesment --------------------------------------------------
+
+# Summarize stats per condition
+stats_per_condition <- mp_growth_rates_joined %>%
+  group_by(Condition) %>%
+  summarise(
+    n = n(),
+    R = cor(measured, icho1766),
+    R2 = R^2,
+    .groups = "drop"
+  )
+stats_per_condition
+
+# Summarize stats per condition
+stats_per_condition <- mp_titer_rates_joined %>%
+  group_by(Condition) %>%
+  summarise(
+    n = n(),
+    R = cor(measured, icho1766),
+    R2 = R^2,
+    .groups = "drop"
+  )
+stats_per_condition
   
 # function to plot barplots ---------------------------------------------------
 plot_barplot <- function(data_to_plot,
@@ -177,6 +201,7 @@ color_mapping_condition <- c(
 plot_dotplot <- function(in_data = mp_growth_rates_joined %>% filter(Window %in% c("1", "2", "3")),
                          x_y_lim = c(-0.005, 0.04),
                          facet_window = TRUE,
+                         plot_stats = FALSE,
                          xlab,
                          ylab,
                          plot_titer = FALSE
@@ -187,6 +212,27 @@ plot_dotplot <- function(in_data = mp_growth_rates_joined %>% filter(Window %in%
   
   # Define facet layer
   facet_layer <- if (facet_window) facet_wrap(~Window, nrow = 1) else NULL
+  
+  # Define stacked y positions for each condition
+  stats_per_condition <- stats_per_condition %>%
+    arrange(Condition) %>%   # optional: order by condition
+    mutate(
+      x_pos = min(mp_growth_rates_joined$icho1766) + 0.05 * diff(range(mp_growth_rates_joined$icho1766)),
+      y_pos = max(mp_growth_rates_joined$measured) - (0:(n()-1)) * 0.05 * diff(range(mp_growth_rates_joined$measured))
+    )
+  
+  stats_layer <- if (plot_stats)   
+    geom_text(
+      data = stats_per_condition,
+      aes(
+        x = x_pos, 
+        y = y_pos, 
+        label = paste0("R²=", round(R2, 2)),
+        color = Condition
+      ),
+      inherit.aes = FALSE,
+      hjust = 0, vjust = 1
+    ) else NULL
 
   # Define axis labels for Titer
   axis_labels <- if (plot_titer) function(x) x * 1e5 else identity
@@ -209,6 +255,7 @@ plot_dotplot <- function(in_data = mp_growth_rates_joined %>% filter(Window %in%
       width = .00025,
       linewidth = .25
     ) +
+    stats_layer +
     scale_color_manual(values = color_mapping_condition) +
     scale_y_continuous(name = ylab,
                        limits = x_y_lim,
@@ -278,6 +325,14 @@ plot_dotplot(in_data = mp_growth_rates_joined ,
              ylab = expression(paste("Predicted Rates [",h^-1 ,"]")),
              plot_titer = FALSE)
 
+plot_dotplot(in_data = mp_growth_rates_joined ,
+             x_y_lim = c(-0.00153, 0.038),
+             facet_window = FALSE,
+             plot_stats = TRUE,
+             xlab = expression(paste("Measured (Experimental) Rates [",h^-1 ,"]")), 
+             ylab = expression(paste("Predicted Rates [",h^-1 ,"]")),
+             plot_titer = FALSE)
+
 ggsave(filename = "figures/fba/pfba_fba_fva/window_specific_notbiomasscorrected/dotplots_biomass_FBA_NOfacet_window.png",
        height = 120,
        width = 170,
@@ -322,9 +377,26 @@ ggsave(filename = "figures/fba/pfba_fba_fva/dotplots_igg_FBA_facet_window.png",
        bg = "white") 
 
 
+# Quantitative assesment --------------------------------------------------
 
 
-  
+df_summary <- mp_growth_rates_joined %>%
+  group_by(Condition) %>%
+  summarise(
+    n = n(),
+    r = cor(measured, icho1766, use = "complete.obs"),
+    r2 = r^2,
+    rmse = sqrt(mean((icho1766 - measured)^2, na.rm = TRUE)),
+    slope = coef(lm(icho1766 ~ measured))[2],
+    intercept = coef(lm(icho1766 ~ measured))[1],
+    .groups = "drop"
+  )
+
+
+
+
+
+
   
   
   
