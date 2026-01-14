@@ -6,7 +6,7 @@ library(fs)
 
 # load abundance data -----------------------------------------------------
 
-load("analysis/500_ppm/abundance_data_none.RData")
+load("analysis/abundance_data_none.RData")
 
 glycosylation <-  abundance_data_averaged  
 
@@ -24,7 +24,7 @@ composition_mapping <- list(
 
 # for each coef make files for cafog analysis --------------------------------------
 coefs <-  unique(glycosylation$experiment_tp) 
-
+coefs
 fs::dir_create(paste0("analysis/cafog/",coefs))
 
 #for loop to create cafog files for each CHO_cell_variant_bio_repliacte
