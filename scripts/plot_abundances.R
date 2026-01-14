@@ -4,12 +4,17 @@ library(tidyverse)
 
 # define analysis of pngase F digested or not digested data ---------------
 
-pngase <- "pngase" # "none" or "pngase"
+pngase <- "none" # "none" or "pngase"
 
 # load an overview table of data & analysis paths -------------------------
 
 samples_table <- read_csv(paste0("analysis/overview_",pngase,"_merged.csv")) %>%
-  # filter(filename != "20240904_TB_cnistcho_E13_192_none_4_29.mzML") %>%#possibly an outlier
+  filter(filename.x != "20251002_TB_cnistcho_E13_312_none_1_336.mzML") %>% #possibly an outlier
+  filter(filename.x != "20251113_TB_cnistcho_E20_288_none_3_1368.mzML") %>% #possibly an outlier
+  # filter(filename.x != "20251113_TB_cnistcho_E20_288_none_2_1367.mzML") %>% #possibly an outlier
+  
+  # filter(sample_name != "20251002_TB_Nistmab_150mg_l_pngase") %>% # nistmab control
+  
   {.}
 
 # load abundances using a for loop  ---------------------------------------
@@ -70,7 +75,13 @@ abundance_data_averaged <- abundance_data %>%
            remove = FALSE) %>%
   mutate(experiment = factor(experiment, 
                            levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")
-                           )) %>%
+                           # levels = c("E15", "E17", "E19", "E16", "E18", "E20")
+                           ),
+         timepoint = factor(timepoint, 
+                             # levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")
+                             levels = c("72", "96", "120", "144", "168", "192","216",
+                                        "240", "264", "288", "312", "336", "360"))
+         ) %>%
   {.}
 
 save(abundance_data,
@@ -130,9 +141,12 @@ ggplot(data, aes(x = modcom_name, y = frac_abundance, fill = experiment)) +
     NULL
 }
 
+abundance_data %>%
+  filter(experiment_tp %in% "E20_288")
+
 plot_bars(abundance_data_averaged, row_number = 2)
 
-ggsave(filename = "figures/pngase_frac_ab_barplot_all_experiments.png",
+ggsave(filename = "figures/20251001_TB_cNISTCHO_CharRUns_rem_allTP/pngase_frac_ab_barplot_all_experiments.png",
        height = 200,
        width = 250,
        units = "mm",
