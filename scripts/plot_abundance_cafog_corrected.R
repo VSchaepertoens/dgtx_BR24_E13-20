@@ -60,50 +60,96 @@ corr_abundance_data <- abundance_data %>%
            ),
            sep = "_",
            remove = FALSE) %>%
-  mutate(experiment = factor(experiment, levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20"))) %>%
+  mutate(experiment = factor(experiment, levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")),
+         timepoint = factor(timepoint, 
+                            # levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")
+                            levels = c("72", "96", "120", "144", "168", "192","216",
+                                       "240", "264", "288", "312", "336", "360"))) %>%
   # filter(experiment != "E17")
   # drop_na()
   {.}
 
-save(corr_abundance_data, file = "analysis/corr_abundance_data.RData")
+# save(corr_abundance_data, file = "analysis/corr_abundance_data.RData")
 
-load("analysis/corr_abundance_data.RData")
+# load("analysis/corr_abundance_data.RData")
 
-correct_order <- c("none/G0F",
-                   "none/G1F",
-                   "none/G2F",
-                   "G0/G0",
-                   "G0/G0F",
-                   "G0F/G0F",
-                   "G0F/G1F",
-                   "G1F/G1F",
-                   "G1F/G2F",
-                   "G2F/G2F")
+# correct_order <- c("none/G0F",
+#                    "none/G1F",
+#                    "none/G2F",
+#                    "G0/G0",
+#                    "G0/G0F",
+#                    "G0F/G0F",
+#                    "G0F/G1F",
+#                    "G1F/G1F",
+#                    "G1F/G2F",
+#                    "G2F/G2F")
+# 
+# 
+# 
+# corr_abundance_data <- corr_abundance_data %>%
+#   # drop_na() %>%
+#   mutate(experiment = factor(experiment, 
+#                              levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")
+#                              )) %>%
+#   # filter(experiment != c("E17")) %>%
+#   group_by(experiment, timepoint) %>%
+#   arrange(match(glycoform1, correct_order)) %>%
+#   ungroup() %>%
+#   arrange(experiment_tp) %>%
+#   {.}
+# 
+# write_csv(x = corr_abundance_data,
+#           file = "analysis/corr_abundance_data_4tp.csv")
+# WriteXLS(x = corr_abundance_data,
+#          ExcelFileName = "analysis/corr_abundance_data_4tp.xls")
 
 
+# check missing annotations -----------------------------------------------
 
+#check missing glycan annotations
+corr_abundance_data %>%
+  filter(experiment_tp %in% "E13_336")
+
+# corr_abundance_data_fixed <- corr_abundance_data
+corr_abundance_data_fixed <- corr_abundance_data_fixed %>%
+  mutate(
+    glycoform1 = if_else(
+      experiment_tp == "E13_336" & is.na(glycoform1),
+      # experiment_tp == "E19_216" & glycoform1 == "G1/G2F",
+      "none/G1F",   # <-- replace this with the correct annotation
+      glycoform1
+    )
+  )
+
+corr_abundance_data_fixed %>%
+  filter(experiment_tp %in% "E13_336")
+
+corr_abundance_data <- corr_abundance_data_fixed
+
+#ensures correct order of glycoforms
 corr_abundance_data <- corr_abundance_data %>%
-  # drop_na() %>%
-  mutate(experiment = factor(experiment, 
-                             levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")
-                             )) %>%
-  # filter(experiment != c("E17")) %>%
-  group_by(experiment, timepoint) %>%
-  arrange(match(glycoform1, correct_order)) %>%
-  ungroup() %>%
-  arrange(experiment_tp) %>%
-  {.}
-
-write_csv(x = corr_abundance_data,
-          file = "analysis/corr_abundance_data_4tp.csv")
-WriteXLS(x = corr_abundance_data,
-         ExcelFileName = "analysis/corr_abundance_data_4tp.xls")
-
+  mutate(glycoform1 = factor(glycoform1, levels = c("none/G0F",
+                                                    "none/G1F",
+                                                    "none/G2F",
+                                                    "G0/G0",
+                                                    "G0/G0F",
+                                                    "G0F/G0F",
+                                                    "G0F/G1F",
+                                                    "G1F/G1F",
+                                                    "G1F/G2F",
+                                                    "G2F/G2F")
+  )) %>%
+  filter(timepoint != "72")
 
 # prepare data for differential analysis --------------------------------------------------
 # data.matrix <- readxl::read_excel("data/data_matrix_TR.xlsx") %>%
 #   column_to_rownames('...1') %>%
 #   as.matrix() 
+
+#check for duplicates
+corr_abundance_data %>%
+  dplyr::summarise(n = dplyr::n(), .by = c(glycoform1, experiment_tp)) %>%
+  dplyr::filter(n > 1)
   
 data.matrix <- corr_abundance_data %>%
   select(glycoform1, corr_abundance, experiment_tp) %>%
@@ -112,6 +158,18 @@ data.matrix <- corr_abundance_data %>%
   column_to_rownames('glycoform1') %>%
   as.matrix() 
 
+save(corr_abundance_data, data.matrix, file = "analysis/charrun_E13-E20_CQA_V02_20251124_VS.RData")
+
+# filter 120 and 264 tp (just as a comparison with tpp sanity runs)
+data.matrix <- corr_abundance_data %>%
+  filter(timepoint %in% c("120", "264")) %>%
+  select(glycoform1, corr_abundance, experiment_tp) %>%
+  pivot_wider(values_from = corr_abundance,
+              names_from = experiment_tp) %>%
+  column_to_rownames('glycoform1') %>%
+  as.matrix() 
+
+save(data.matrix, file = "analysis/charrun_E13-E20_CQA_V04_20251124_VS.RData")
 
 # filter 144 and 288 tp (just as a comparison with peptide mapping)
 data.matrix <- corr_abundance_data %>%
@@ -161,6 +219,8 @@ clr_data.matrix <- t(as.matrix(clr_data.matrix))
 clr_data.matrix
 
 save(clr_data.matrix, clr_data.matrix, meta, file = "analysis/e13_e20_nglycans_clr.RData")
+save(corr_abundance_data, clr_data.matrix, file = "analysis/charrun_E13-E20_CQA_V03_20251124_VS.RData")
+save(data.matrix, file = "analysis/charrun_E13-E20_CQA_V05_20251124_VS.RData")
 
 
 ##
@@ -172,6 +232,28 @@ write_csv(data.matrix_tosave,
           file = "analysis/corr_abundance_data_matrix.csv")
 WriteXLS(x = data.matrix_tosave,
          ExcelFileName = "analysis/corr_abundance_data_matrix.xls")
+
+
+# removing E16 and E17 for stats analysis ---------------------------------
+load("analysis/charrun_E13-E20_CQA_V03_20251124_VS.RData")
+corr_abundance_data <- corr_abundance_data %>%
+  filter(experiment %in% c("E13", "E14", "E15", "E18","E19", "E20"))
+data.matrix <- NULL
+data.matrix <- corr_abundance_data %>%
+  select(glycoform1, corr_abundance, experiment_tp) %>%
+  pivot_wider(values_from = corr_abundance,
+              names_from = experiment_tp) %>%
+  column_to_rownames('glycoform1') %>%
+  as.matrix() 
+
+# clr transformation
+clr_data.matrix <- clr(t(data.matrix))
+# Convert the CLR-transformed data back to a matrix
+clr_data.matrix <- t(as.matrix(clr_data.matrix))
+
+clr_data.matrix
+
+save(corr_abundance_data, clr_data.matrix, file = "analysis/charrun_E13-E20_CQA_V04_20251124_VS.RData")
 
 # plot char runs data -----------------------------------------------------
 # Define the colors
@@ -201,6 +283,7 @@ color_mapping_experiment <- c(
 # c("#BCBDDC", "#9E9AC8", "#807DBA", "#6A51A3", "#54278F")
 
 
+
 plot_bars <- function(data,
                       title = "Fractional abundance",
                       row_number = 1){
@@ -222,7 +305,7 @@ plot_bars <- function(data,
     facet_wrap(~ timepoint, nrow = row_number) +
     scale_fill_manual(values = color_mapping_experiment) +
     scale_y_continuous(name = "fractional abundance (%)",
-                       limits = c(0,65)) +
+                       limits = c(0,70)) +
     xlab("") +
     theme_bw() +
     theme(text = element_text(size = 16, 
@@ -241,12 +324,14 @@ plot_bars <- function(data,
   }
   
 
+
+
 ## plot all experiments
 plot_bars(corr_abundance_data,
           title = "Fractional abundance of glycans in all experiments",
           row_number = 2)
 
-ggsave(filename = "figures/corrected_frac_ab_barplot_all_experiments_bold16.png",
+ggsave(filename = "figures/corrected_frac_ab_barplot_all_experiments.png",
        height = 200,
        width = 250,
        units = "mm",
