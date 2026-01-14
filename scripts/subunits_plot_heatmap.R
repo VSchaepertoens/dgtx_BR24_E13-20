@@ -10,8 +10,35 @@ library(svglite)
 data <- read_csv('data/Subunit_quantificaction_ E13_20.csv')
 
 
+# load data 20251002 & preprocess -----------------------------------------
+
+data <- read_csv('data/uv_subunits_TB.csv')
+
+data_summarized <- data %>%
+  group_by(experiment, timepoint) %>%
+  summarise(lc_mean = mean(LC),
+            lc2_mean = mean(LC2),
+            intact_mean = mean(Intact)) %>%
+  mutate(total = rowSums(across(c(lc_mean, lc2_mean, intact_mean)))) %>%
+  mutate(LC = (lc_mean/total)*100,
+         LC2 = (lc2_mean/total)*100,
+         Intact = (intact_mean/total)*100) %>%
+  select(experiment, timepoint ,LC ,LC2 ,Intact) %>%
+  pivot_longer(cols = c("LC", "LC2", "Intact"),
+               names_to = c("subunit"),
+               values_to = "peak_area") %>%
+  mutate(Time = as.numeric(timepoint),
+         Experiment = factor(experiment, levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20"))) %>%
+  mutate(Condition = case_when(
+    Experiment %in% c('E13', 'E15', 'E17', 'E19') ~ 'Constant',
+    Experiment %in% c('E14', 'E16', 'E18', 'E20') ~ 'Temp. shifted',
+    TRUE ~ 'other'
+  )) %>%
+  filter(Time != 72)
+
+
 # heatmap -----------------------------------------------------------------
-## plot heatmap of raw data ------------------------------------------------
+## plot heatmap of raw data 
 
 data.matrix <- as.matrix(data)
 
@@ -19,7 +46,7 @@ Heatmap(data.matrix)
 Heatmap(data.matrix, col = plasma(100))
 Heatmap(data.matrix, col = rev(rainbow(10)))
 
-## calculate z-score & plot heatmap -------------------------------------------------------
+## calculate z-score & plot heatmap 
 
 scaled.data.matrix = t(scale(t(data.matrix))) # for scaling by row  
 
@@ -260,7 +287,7 @@ df_clean <- data %>%
 
 
 # Line plot
-ggplot(df_clean, aes(x = Time, 
+ggplot(data_summarized, aes(x = Time, 
                      y = peak_area, 
                      color = subunit, 
                      group = subunit)) +
@@ -285,7 +312,7 @@ color_mapping_condition <- c(
 )
 
 # Line plot, facet per subunit
-ggplot(df_clean, aes(x = Time, 
+ggplot(data_summarized, aes(x = Time, 
                      y = peak_area, 
                      color = Condition)) +
   geom_point(aes(shape = Experiment),
@@ -324,14 +351,13 @@ ggplot(df_clean, aes(x = Time,
        title = "Subunit composition over time",
        color = "Condition")
 
-
-ggsave("figures/subunit_quantification/subunit_line.pdf",
+ggsave("figures/20251001_TB_cNISTCHO_CharRUns_rem_allTP/subunit_quantification/subunit_line.pdf",
        width = 6,
        height = 6,
        dpi = 600,
        bg = "white")
 
-ggsave("figures/subunit_quantification/subunit_line.png",
+ggsave("figures/20251001_TB_cNISTCHO_CharRUns_rem_allTP/subunit_quantification/subunit_line.png",
        width = 6,
        height = 6,
        dpi = 600,
