@@ -39,7 +39,7 @@ proteins <- define_proteins(
 
 # specify names of paths --------------------------------------------------
 
-df <- tibble(mzml_full_path = dir_ls(path = "data",regexp =  ".*\\.mzML"),) %>%
+df <- tibble(mzml_full_path = dir_ls(path = "data/",regexp =  ".*\\.mzML"),) %>%
   separate(mzml_full_path,
            into = c("data", "filename"),
            sep = "/",
@@ -48,19 +48,26 @@ df <- tibble(mzml_full_path = dir_ls(path = "data",regexp =  ".*\\.mzML"),) %>%
                                   gsub("\\..*$", "", filename))) %>%
   filter(grepl(pngase, filename, ignore.case = TRUE)) %>%
   mutate(sample_name = str_extract(filename, "([^_]+_[^_]+_[^_]+_[^_]+_[^_]+_[^_]+)"))
-df <- df[1:195,] # for pngase to remove reference nistmab
+# df <- df[1:195,] # for pngase to remove reference nistmab
+
+
+
+  
 fs::dir_create(df$analysis_path)
 
 # load cs and rt data -----------------------------------------------------
 
-cs_rt_data <- read_csv("data/samples_overview_filtered_TB.csv") %>%
-  filter(grepl(pngase, sample_name, ignore.case = TRUE)) %>%
+cs_rt_data <- read_csv("data/rt_seconds.csv") %>%
+  # filter(grepl(pngase, sample_name, ignore.case = TRUE)) %>%
+  filter(pngase == "pngase") %>%
   mutate(sample_name = str_extract(sample_name, "([^_]+_[^_]+_[^_]+_[^_]+_[^_]+_[^_]+)"))
 
 # merge df and cs_rt_data ------------------------------------------------
 
 data_merged <- df %>% 
-  left_join(cs_rt_data, by = "sample_name") 
+  left_join(cs_rt_data, by = "sample_name") %>%
+  filter(!is.na(pngase))
+
 
 write_csv(data_merged, 
           paste0("analysis/overview_",pngase,"_merged.csv"))
@@ -174,8 +181,8 @@ calculate_abundance <- function(mzml_full_path,
 
 ## apply custom function to dfr --------------------------------------------
 
-pwalk(data_merged[87:195,], calculate_abundance, .progress = TRUE)
-pwalk(data_merged[27,], calculate_abundance, .progress = TRUE)
+pwalk(data_merged, calculate_abundance, .progress = TRUE)
+pwalk(data_merged[1:75,], calculate_abundance, .progress = TRUE)
 
 start.time <- Sys.time()
 pwalk(data_merged, calculate_abundance, .progress = TRUE)
