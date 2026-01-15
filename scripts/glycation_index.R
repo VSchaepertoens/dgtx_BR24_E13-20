@@ -1,3 +1,12 @@
+library(ggnewscale)
+library(tidyverse)
+library(ggpubr)
+library(dplyr)
+library(purrr)
+library(broom)
+library(ggnewscale)
+
+
 # glycation index ---------------------------------------------------------
 load("analysis/abundance_data_pngase.RData")
 
@@ -114,6 +123,17 @@ color_mapping_condition <- c(
   "Temp. shifted" = "#54278F"
 )
 
+color_mapping_experiment <- c(
+  "E13" = "#FD8D3C",
+  "E14" = "#9E9AC8",
+  "E15" = "#F16913",
+  "E16" = "#807DBA",
+  "E17" = "#D94801",
+  "E18" = "#6A51A3",
+  "E19" = "#A63603",
+  "E20" = "#54278F"
+)
+
 glu_ind <-
   ggplot(data = gi_stats) +
   # Points: color and linetype mapped to condition in one aes() call
@@ -177,7 +197,92 @@ glu_ind <-
 
 plot(glu_ind)
 
-# 
+
+
+# lineplots glycation index -----------------------------------------------
+ggplot() +
+  geom_vline(aes(xintercept = 146, linetype = "Temp. shift"),
+             color = "#58A787", linewidth = 1) +
+  # individual experiments
+  geom_line(
+    data = gi_summary,
+    aes(
+      x = tp,
+      y = glycation_index,
+      group = experiment,
+      # color = experiment
+    ),
+    linewidth = 0.6,
+    alpha = 0.25
+  ) +
+  geom_point(
+    data = gi_summary,
+    aes(
+      x = tp,
+      y = glycation_index,
+      # color = experiment,
+      shape = experiment
+    ),
+    size = 2,
+    alpha = 0.25
+  ) +
+  # scale_color_manual(
+  #   values = color_mapping_experiment,
+  #   breaks = names(color_mapping_experiment),
+  #   name = "Experiment"
+  # ) +
+  labs(
+    color = "",
+  ) +
+  # new_scale_color() +
+  # condition means
+  geom_line(
+    data = gi_stats,
+    aes(
+      x = tp,
+      y = mean_GI,
+      group = condition,
+      color = condition
+    ),
+    linewidth = 1
+  ) +
+  scale_color_manual(
+    values = color_mapping_condition,
+    breaks = names(color_mapping_condition),
+    name = "Condition"
+  ) +
+  scale_shape_manual(values = 1:nlevels(gi_summary$experiment)) +
+  labs(
+    x = "Time [h]",
+    y = "Glycation index [%]",
+    color = "Condition",
+    linetype = "Temp. shift",
+    shape = "Experiment"
+  ) +
+  theme_bw() +
+  theme(
+    axis.line = element_line(colour = "black"),
+    axis.text = element_text(colour = "black"),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.border = element_blank(),
+    legend.position = "top",
+    legend.title = element_text(face = "bold"),
+    legend.title.position = "top",
+    legend.text = element_text(size = 10),
+    legend.box = "horizontal"
+  )
+
+
+ggsave(filename = "figures/glycation_index_lineplot.png",
+       width = 170,
+       height = 100,
+       units = "mm",
+       dpi = 600,
+       bg = "white")
+
+
 # # plot glycation index as barplot -----------------------------------------
 # gly_ind_bar <- ggplot(data = gi_stats, aes(x = condition, y = mean_GI)) +
 #   geom_col(aes(fill = condition),
@@ -260,32 +365,4 @@ plot(glu_ind)
 #        dpi = 600,
 #        bg = "white")
 # 
-# # arrange both indices ----------------------------------------------------
-# 
-# ggarrange(gal_ind,glu_ind, ncol = 2, common.legend = TRUE)  
-# 
-# ggsave("figures/galactosyaltion_glycation_index.png",
-#        width = 200,
-#        height = 85,
-#        units = "mm",
-#        dpi = 600,
-#        bg = "white")
-# 
-# ggarrange(gal_ind_bar,gly_ind_bar, ncol = 2, common.legend = TRUE, legend = "bottom")  
-# 
-# ggsave("figures/galactosylation_glycation_index_barplot_facet_time.png",
-#        width = 210,
-#        height = 85,
-#        units = "mm",
-#        dpi = 600,
-#        bg = "white")
-# 
-# 
-# ggarrange(gal_ind_bar_sig,gly_ind_bar, ncol = 2, common.legend = TRUE, legend = "bottom")  
-# 
-# ggsave("figures/figure_5_c_d.png",
-#        width = 210,
-#        height = 85,
-#        units = "mm",
-#        dpi = 600,
-#        bg = "white")
+
