@@ -28,14 +28,16 @@ data_summarized <- data %>%
   pivot_longer(cols = c("LC", "LC2", "Intact"),
                names_to = c("subunit"),
                values_to = "peak_area") %>%
-  mutate(Time = as.numeric(timepoint),
-         Experiment = factor(experiment, levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20"))) %>%
-  mutate(Condition = case_when(
-    Experiment %in% c('E13', 'E15', 'E17', 'E19') ~ 'Constant',
-    Experiment %in% c('E14', 'E16', 'E18', 'E20') ~ 'Temp. shifted',
+  mutate(timepoint = as.numeric(timepoint),
+         experiment = factor(experiment, levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20"))) %>%
+  mutate(condition = case_when(
+    experiment %in% c('E13', 'E15', 'E17', 'E19') ~ 'CT',
+    experiment %in% c('E14', 'E16', 'E18', 'E20') ~ 'TS',
     TRUE ~ 'other'
   )) %>%
-  filter(Time != 72)
+  filter(timepoint != 72) %>%
+  mutate(experiment_tp = paste(experiment, timepoint, sep = "_")) 
+  
 
 
 # heatmap -----------------------------------------------------------------
@@ -271,30 +273,30 @@ data_summarized <- data %>%
 # Assuming df has columns: Sample, subunit, peak_area
 # all_conditions <- c("E17")
 
-df_clean <- data_summarized %>%
-  # separate sample into condition and time (assuming format E13_120)
-  # tidyr::separate(Sample, into = c("Experiment", "Time"), sep = "_") %>%
-  complete(Experiment = all_conditions,
-           Time,
-           subunit,
-           fill = list(rel_area = 0)) %>%
-  mutate(Time = as.numeric(Time),
-         Experiment = factor(Experiment, levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20"))) %>%
-  mutate(Condition = case_when(
-    Experiment %in% c('E13', 'E15', 'E17', 'E19') ~ 'Constant',
-    Experiment %in% c('E14', 'E16', 'E18', 'E20') ~ 'Temp. shifted',
-    TRUE ~ 'other'
-    )) 
+# df_clean <- data_summarized %>%
+#   # separate sample into condition and time (assuming format E13_120)
+#   # tidyr::separate(Sample, into = c("Experiment", "Time"), sep = "_") %>%
+#   complete(Experiment = all_conditions,
+#            Time,
+#            subunit,
+#            fill = list(rel_area = 0)) %>%
+#   mutate(Time = as.numeric(Time),
+#          Experiment = factor(Experiment, levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20"))) %>%
+#   mutate(Condition = case_when(
+#     Experiment %in% c('E13', 'E15', 'E17', 'E19') ~ 'Constant',
+#     Experiment %in% c('E14', 'E16', 'E18', 'E20') ~ 'Temp. shifted',
+#     TRUE ~ 'other'
+#     )) 
 
 
 # Line plot
-ggplot(data_summarized, aes(x = Time, 
+ggplot(data_summarized, aes(x = timepoint, 
                      y = peak_area, 
                      color = subunit, 
                      group = subunit)) +
   geom_line(size = 1.2) +
   geom_point(size = 2) +
-  facet_wrap(~Experiment, nrow = 2) +
+  facet_wrap(~experiment, nrow = 2) +
   theme_minimal(base_size = 11) +
   theme(axis.text.x = element_text(angle = 45)) +
   labs(x = "Time", y = "Relative peak area (%)",
@@ -308,58 +310,63 @@ color_mapping_condition <- c(
   # "E16" = "#807DBA",
   # "E17" = "#D94801",
   # "E18" = "#6A51A3",
-  "Constant" = "#A63603",
-  "Temp. shifted" = "#54278F"
+  "CT" = "#E6641E",
+  "TS" = "#4B288C"
 )
 
 # Line plot, facet per subunit
-ggplot(data_summarized, aes(x = Time, 
+ggplot(data_summarized, aes(x = timepoint, 
                      y = peak_area, 
-                     color = Condition)) +
-  geom_point(aes(shape = Experiment),
+                     color = condition)) +
+  geom_vline(aes(xintercept = 146, linetype = "Temp. shift to 32 °C"),
+             color = "#58A787", 
+             linewidth = 1.5) +
+  geom_point(aes(shape = experiment),
              size = 1,
              alpha = 0.5) +
-  geom_line(aes(group = Experiment), alpha = 0.3) + #“Trend lines show locally weighted regression fits (LOESS) with no confidence interval (se = FALSE).”
+  geom_line(aes(group = experiment), alpha = 0.3) + #“Trend lines show locally weighted regression fits (LOESS) with no confidence interval (se = FALSE).”
   geom_smooth(size = 1.2, se = FALSE, alpha = 0.9) +
-  geom_vline(aes(xintercept = 146, linetype = "Temp. shift"),
-             color = "#58A787", linewidth = 1) +
-  scale_linetype_manual(values = c("Temp. shift" = "dashed"), name = "Event") +
-  # geom_vline(xintercept = 146, color = "#5EA38A", linetype = "dashed", linewidth = 0.75) +  # Highlight y = 0 line
+
   scale_color_manual(values = color_mapping_condition) +
-  scale_shape_manual(values = 1:nlevels(df_clean$Experiment)) +
-  # annotate("text",
-  #          x = 146,
-  #          y = max(df_clean$peak_area-2, na.rm = TRUE),
-  #          label = "37°->32°C",
-  #          vjust = -0.5,
-  #          color = "#5EA38A",
-  #          size = 3) +
-  # scale_y_continuous(limits = c(0, NA), expand = c(0,0)) +
-  # scale_x_continuous(limits = c(100, 400), expand = c(0,0)) +
-  # scale_y_continuous(limits = c(0, NA)) +
+  scale_shape_manual(values = 1:nlevels(data_summarized$experiment)) +
+
   facet_wrap(~subunit, ncol = 1, scales = "free_y") +
   theme_bw(base_size = 12) +
-  theme(axis.text = element_text(color = "black"),
-        strip.background = element_blank(),
-        strip.text = element_text(face = "bold"),
-        panel.grid.minor = element_blank(),
-        # panel.border = element_blank(),
-        panel.border = element_rect(color = "grey70", fill = NA, linewidth = 0.5),
-        axis.ticks = element_blank(),
-        # axis.line = element_line(color = "black")
+  theme(
+    plot.margin = unit(c(0.5, 0.5, 0.5, 0.5), "mm"),
+    plot.background = element_rect(fill = NA, colour = NA),
+    legend.background = element_rect(fill = NA, colour = NA),
+    legend.key = element_rect(fill = NA, colour = NA),
+    strip.background = element_rect(fill = NA, colour = NA),
+    panel.background = element_rect(fill = NA, colour = NA),
+    legend.title = element_text(size = 10, face = "bold"),
+    axis.text = element_text(color = "black"),
+    axis.line = element_line(linewidth = 0.3, color = "black"),
+    axis.ticks = element_line(linewidth = 0.3, color = "black"),
+    legend.position = "bottom",
+    legend.title.position = "top",
+    legend.direction = "horizontal",
+    strip.text = element_text(face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.border = element_blank(),
         ) +
   labs(x = "Time [h]", y = "Relative peak area (%)",
        title = "Subunit composition over time",
-       color = "Condition")
+       shape = "Experiment",
+       color = "Condition",
+       linetype = "Event")
+
+
 
 ggsave("figures/20251001_TB_cNISTCHO_CharRUns_rem_allTP/subunit_quantification/subunit_line.pdf",
-       width = 6,
+       width = 7,
        height = 6,
        dpi = 600,
        bg = "white")
 
-ggsave("figures/20251001_TB_cNISTCHO_CharRUns_rem_allTP/subunit_quantification/subunit_line.png",
-       width = 6,
+ggsave("figures/20251001_TB_cNISTCHO_CharRUns_rem_allTP/subunit_quantification/subunit_line.svg",
+       width = 7,
        height = 6,
        dpi = 600,
        bg = "white")
@@ -369,7 +376,6 @@ ggsave("figures/20251001_TB_cNISTCHO_CharRUns_rem_allTP/subunit_quantification/s
 
 data_summarized %>%
   ungroup() %>%
-  mutate(experiment_tp = paste(experiment, timepoint, sep = "_")) %>%
   dplyr::summarise(n = dplyr::n(), .by = c(subunit, experiment_tp)) %>%
   dplyr::filter(n > 1)
  
