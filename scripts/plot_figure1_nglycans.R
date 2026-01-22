@@ -71,8 +71,8 @@ ggplot(br_averaged_corr_abundance_data,aes(x = timepoint, group = condition)) +
     linetype = guide_legend(order = 2)
   ) + theme(legend.position = "none")
 
-ggsave(here("figures/figure1_nglycans.png"), width = 5, height = 5, dpi = 600, bg = "white")
-ggsave(here("figures/figure1_nglycans.pdf"), width = 5, height = 5, dpi = 600, bg = "white")
+ggsave(here("figures/figure1_nglycans.png"), width = 5, height = 3, dpi = 600, bg = "white")
+ggsave(here("figures/figure1_nglycans.pdf"), width = 5, height = 3, dpi = 600, bg = "white")
 
 
 

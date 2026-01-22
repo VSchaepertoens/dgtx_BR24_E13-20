@@ -4,6 +4,8 @@ library(circlize)
 library(viridis)
 library(svglite)
 library(compositions)
+source("scripts/plotting_utils.R", local = FALSE)
+library(here)
 
 
 # load_data ---------------------------------------------------------------
@@ -303,16 +305,16 @@ ggplot(data_summarized, aes(x = timepoint,
        title = "Subunit composition over time",
        color = "Subunit")
 
-color_mapping_condition <- c(
-  # "E13" = "#FD8D3C",
-  # "E14" = "#9E9AC8",
-  # "E15" = "#F16913",
-  # "E16" = "#807DBA",
-  # "E17" = "#D94801",
-  # "E18" = "#6A51A3",
-  "CT" = "#E6641E",
-  "TS" = "#4B288C"
-)
+# color_mapping_condition <- c(
+#   # "E13" = "#FD8D3C",
+#   # "E14" = "#9E9AC8",
+#   # "E15" = "#F16913",
+#   # "E16" = "#807DBA",
+#   # "E17" = "#D94801",
+#   # "E18" = "#6A51A3",
+#   "CT" = "#E6641E",
+#   "TS" = "#4B288C"
+# )
 
 # Line plot, facet per subunit
 ggplot(data_summarized, aes(x = timepoint, 
@@ -351,7 +353,7 @@ ggplot(data_summarized, aes(x = timepoint,
     panel.grid.minor = element_blank(),
     panel.border = element_blank(),
         ) +
-  labs(x = "Time [h]", y = "Relative peak area (%)",
+  labs(x = "Time [h]", y = "Relative peak area [%]",
        title = "Subunit composition over time",
        shape = "Experiment",
        color = "Condition",
@@ -370,6 +372,62 @@ ggsave("figures/20251001_TB_cNISTCHO_CharRUns_rem_allTP/subunit_quantification/s
        height = 6,
        dpi = 600,
        bg = "white")
+
+
+# average of biological replicates ----------------------------------------
+
+averaged_data_summarized <- data_summarized %>%
+  group_by(subunit, condition, timepoint) %>%
+  summarise(
+    mean_peak_area = mean(peak_area, na.rm = TRUE),
+    se_peak_area = sd(peak_area, na.rm = TRUE)/sqrt(n()) 
+  ) %>%
+  ungroup() 
+
+ggplot(averaged_data_summarized,aes(x = timepoint, group = condition)) +
+  geom_vline(
+    aes(xintercept = 146, linetype = "TS to 32 °C"),
+    color = "#58A787",
+    linewidth = 1
+  ) +
+  geom_ribbon(
+    aes(
+      ymin = mean_peak_area - se_peak_area,
+      ymax = mean_peak_area + se_peak_area,
+      fill = condition
+    ),
+    alpha = 0.25,
+    color = NA
+  ) +
+  geom_line(
+    aes(
+      y = mean_peak_area,
+      color = condition
+    ),
+    linewidth = 0.9,
+    linetype = "solid"
+  ) +
+  facet_wrap(~subunit, ncol = 1, scales = "free_y") +
+  scale_x_continuous(
+    limits = c(96, 360),
+    breaks = seq(96, 360, 48)
+  ) +
+  scale_fill_manual(values = color_mapping_condition, name = "Condition") +
+  scale_color_manual(values = color_mapping_condition, guide = "none") +
+  scale_linetype_manual(
+    values = c("TS to 32 °C" = "dashed"),
+    name = "Event"
+  ) +
+  labs(x = "Time [h]",
+       y = "Relative peak area [%]") +
+  theme_tidy() +
+  guides(
+    fill = guide_legend(order = 1),
+    linetype = guide_legend(order = 2)
+  ) + theme(legend.position = "none")
+
+ggsave(here("figures/figure1_subunits.png"), width = 4, height = 3, dpi = 600, bg = "white")
+ggsave(here("figures/figure1_subunits.pdf"), width = 4, height = 3, dpi = 600, bg = "white")
 
 
 # build matrix from the subunit data --------------------------------------
