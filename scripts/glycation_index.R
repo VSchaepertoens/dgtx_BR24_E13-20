@@ -66,8 +66,8 @@ gi_summary <- glycation_data %>%
   )%>%
   separate(experiment_tp, sep = "_", into = c("experiment","tp"),remove = FALSE) %>%
   mutate(condition = case_when(
-    experiment %in% c('E13', 'E15', 'E17', 'E19') ~ 'Constant',
-    experiment %in% c('E14', 'E16', 'E18', 'E20') ~ 'Temp. shifted',
+    experiment %in% c('E13', 'E15', 'E17', 'E19') ~ 'CT',
+    experiment %in% c('E14', 'E16', 'E18', 'E20') ~ 'TS',
     TRUE ~ 'other'
   ),
   tp = as.numeric(tp),
@@ -93,6 +93,7 @@ gi_stats <- gi_summary %>%
   summarise(
     mean_GI = mean(GI),
     sd_GI = sd(GI),
+    se_GI = sd(GI, na.rm = TRUE)/sqrt(n()), 
     .groups = "drop"
   ) 
   # mutate(time_group = if_else(tp == 120, "exponential", "stationary"),
@@ -110,7 +111,7 @@ gi_stats_wider <- gi_stats %>%
   pivot_wider(values_from = c(mean_GI, sd_GI), 
               names_from = tp,
               names_glue = "{.value}_{tp}") %>%
-  mutate(condition = factor(condition, levels = c("Constant", "Temp. shifted"))) %>%
+  mutate(condition = factor(condition, levels = c("CT", "TS"))) %>%
   arrange(condition)
 
 write_csv(gi_stats_wider,
@@ -118,8 +119,8 @@ write_csv(gi_stats_wider,
 
 # plot glycation index ----------------------------------------------------
 color_mapping_condition <- c(
-  "Constant" = "#A63603",
-  "Temp. shifted" = "#54278F"
+  "CT" = "#E6641E",
+  "TS" = "#4B288C"
 )
 
 color_mapping_experiment <- c(
@@ -207,7 +208,7 @@ ggplot() +
     data = gi_summary,
     aes(
       x = tp,
-      y = glycation_index,
+      y = GI,
       group = experiment,
       # color = experiment
     ),
@@ -218,7 +219,7 @@ ggplot() +
     data = gi_summary,
     aes(
       x = tp,
-      y = glycation_index,
+      y = GI,
       # color = experiment,
       shape = experiment
     ),
