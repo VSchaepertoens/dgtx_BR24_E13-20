@@ -13,8 +13,8 @@ gi_summary
 # set color scheme --------------------------------------------------------
 
 color_mapping_condition <- c(
-  "Constant" = "#E6641E",
-  "Temp. shifted" = "#4B288C"
+  "CT" = "#E6641E",
+  "TS" = "#4B288C"
 )
 
 #  visualise data-----------------------------------------------------------
@@ -56,7 +56,7 @@ ggplot(gi_summary, aes(y = GI, x = condition)) +
 # check reference level to be constant
 gi_summary$condition <- factor(gi_summary$condition)
 levels(gi_summary$condition)
-gi_summary$condition <- relevel(gi_summary$condition, ref = "Constant")
+gi_summary$condition <- relevel(gi_summary$condition, ref = "CT")
 levels(gi_summary$condition)
 
 # test for interaction of time and the condition
