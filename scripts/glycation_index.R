@@ -62,7 +62,7 @@ gi_summary <- glycation_data %>%
     total_sites = sum(denominator_glu * frac_abundance, na.rm = TRUE)
   ) %>%
   mutate(
-    glycation_index = (total_glu / total_sites) * 100
+    GI = (total_glu / total_sites) * 100
   )%>%
   separate(experiment_tp, sep = "_", into = c("experiment","tp"),remove = FALSE) %>%
   mutate(condition = case_when(
@@ -91,15 +91,14 @@ print(gi_summary)
 gi_stats <- gi_summary %>%
   group_by(condition, tp) %>%
   summarise(
-    mean_GI = mean(glycation_index),
-    sd_GI = sd(glycation_index),
+    mean_GI = mean(GI),
+    sd_GI = sd(GI),
     .groups = "drop"
   ) 
   # mutate(time_group = if_else(tp == 120, "exponential", "stationary"),
   #        condition = factor(condition, levels = c("STD", "STD+", "LoG", "LoG+", "HiF", "HIP", "HIP+")))
-
-save(gi_summary, gi_stats, file = "analysis/glycation_index.RData")
-load("analysis/glycation_index.RData")
+save(gi_summary, gi_stats, file = "analysis/charrun_E13-E20_glycationindex_V01_20260114_VS.RData")
+load("analysis/charrun_E13-E20_glycationindex_V01_20260114_VS.RData")
 
 # make wider table --------------------------------------------------------
 gi_stats_wider <- gi_stats %>% 
