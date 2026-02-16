@@ -197,8 +197,8 @@ readr::write_excel_csv(qc_stats_2, "analysis/qc_stats_measurement_phase.csv")
     ) 
 
 
-  ggsave(filename = paste0("figures/supplementary_figure_8.pdf"),
-         height = 100,
+  ggsave(filename = paste0("figures/quality_control.pdf"),
+         height = 220,
          width = 160,
          units = "mm",
          dpi = 600)
