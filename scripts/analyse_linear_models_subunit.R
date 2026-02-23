@@ -1,7 +1,7 @@
 library(tidyverse)
 library(splines)
 library(here)
-source("scripts/plotting_utils.R")
+source(here::here("scripts", "plotting_utils.R"))
 
 input_file_path <- here::here("analysis", "charrun_E13-E20_subunit_V02_20260121_VS.RData")
 
@@ -46,11 +46,12 @@ ggplot(clr_data_summarized, aes(timepoint, clr_fractional_abundance, color = con
     name = "Condition"
   ) +
   facet_wrap(~subunit) +
-  scale_shape_manual(values = 1:nlevels(clr_data_summarized$experiment))
+  scale_shape_manual(values = 1:length(clr_data_summarized$experiment))
+
 
   
-  
-  filt_data <- clr_data_summarized %>% filter(subunit == "Intact") 
+  # subset data for a single feature
+  filt_data <- clr_data_summarized %>% filter(subunit == "LC") 
   
   filt_data$condition <- factor(filt_data$condition)
   levels(filt_data$condition)
@@ -60,7 +61,7 @@ ggplot(clr_data_summarized, aes(timepoint, clr_fractional_abundance, color = con
 # formal test for linearity
 fit_lin <- lm(clr_fractional_abundance ~ timepoint * condition, data = filt_data) # fit linear model
 summary(fit_lin)
-fit_quad <- lm(clr_fractional_abundance ~ (timepoint + I(timepoint^2)) * condition, data = filt_data) # fit quadratic model
+fit_quad <- lm(filt_data$clr_fractional_abundance ~ (timepoint + I(timepoint^2)) * condition, data = filt_data) # fit quadratic model
 summary(fit_quad )
 
 anova(fit_lin, fit_quad) # test whether the quadratic term improves the fit
@@ -76,45 +77,59 @@ ggplot(filt_data, aes(y = clr_fractional_abundance, x = condition)) +
   geom_boxplot()
 
 # perform linear regression using splines ---------------------------------------------
+# make sure condition is properly defined once
+clr_data_summarized <- clr_data_summarized %>%
+  mutate(
+    condition = factor(condition),
+    condition = relevel(condition, ref = "CT")
+  )
 
-# test for interaction of time and the condition
-fit_spline <- lm(clr_fractional_abundance ~ ns(timepoint, df = 3) * condition, data = filt_data)
-summary(fit_spline)
+# get all subunits automatically
+subunits <- unique(clr_data_summarized$subunit)
 
-# test for no interaction of time and condition
-fit_no_int <- lm(clr_fractional_abundance ~ ns(timepoint, df = 3) + condition, data = filt_data)
-summary(fit_no_int)
+# empty list to store results
+results_list <- list()
 
-anova_result <- anova(fit_no_int,fit_spline)
-anova_result
-# extract results
-# extract results
-interaction_stats <- anova_result[2, ]
-
-# extract values
-F_value <- interaction_stats$F
-df_num  <- interaction_stats$Df        # numerator df
-df_den  <- interaction_stats$Res.Df    # denominator df
-p_value <- interaction_stats$`Pr(>F)`
-
-# format p-value
-p_text <- ifelse(p_value < 0.001, "< 0.001", sprintf("= %.3g", p_value))
-
-# conditional text
-significance_text <- if (p_value < 0.05) "was significant" else "was not significant"
-
-interpretation_text <- if (p_value < 0.05) {
-  "indicating that the dynamics over time in the Temp. shifted condition differ significantly from those in the Constant condition."
-} else {
-  "indicating that the dynamics over time in the Temp. shifted condition do not differ significantly from those in the Constant condition."
+for (s in subunits) {
+  
+  # subset data
+  filt_data <- clr_data_summarized %>%
+    filter(subunit == s)
+  
+  # fit models
+  fit_spline <- lm(clr_fractional_abundance ~ ns(timepoint, df = 3) * condition,
+                   data = filt_data)
+  
+  fit_no_int <- lm(clr_fractional_abundance ~ ns(timepoint, df = 3) + condition,
+                   data = filt_data)
+  
+  # compare models
+  anova_result <- anova(fit_no_int, fit_spline)
+  
+  # extract interaction row (second row)
+  interaction_stats <- anova_result[2, ]
+  
+  # store results
+  results_list[[s]] <- data.frame(
+    subunit = s,
+    df_num  = interaction_stats$Df,
+    df_den  = interaction_stats$Res.Df,
+    F_value = interaction_stats$F,
+    p_value = interaction_stats$`Pr(>F)`
+  )
 }
 
-# construct and display sentence
-cat(sprintf(
-  "The time × condition interaction %s (F(%d, %d) = %.2f, p %s), %s\n",
-  significance_text, df_num, df_den, F_value, p_text, interpretation_text
-))
+# combine into single dataframe
+results_df <- bind_rows(results_list)
 
+# optional: adjust for multiple testing
+results_df <- results_df %>%
+  mutate(
+    p_adj_BH   = p.adjust(p_value, method = "BH"),
+    p_adj_holm = p.adjust(p_value, method = "holm")
+  )
+
+results_df
 
 # visualise the results with the fitted splines --------------------------
 # create new data for prediction
@@ -146,7 +161,7 @@ ggplot(filt_data, aes(timepoint, clr_fractional_abundance, color = condition)) +
                      name = "Experiment") +
   labs(
     x = "Time [h]",
-    y = "CLR fractional abundance - Intact",
+    y = "CLR fractional abundance - LC",
     linetype = "Temp. shift"
   )
 
