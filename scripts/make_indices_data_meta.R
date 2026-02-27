@@ -82,4 +82,8 @@ meta <- meta_1
 annotation <- tibble(feature_ID = data$feature_id)
 
 
-save(data, meta, file = "analysis/charrun_E13-E20_cqaindices_V01_20260227_VS.RData")  
+save(data, meta, annotation,file = "analysis/charrun_E13-E20_cqaindices_V01_20260227_VS.RData")  
+
+write_csv(data, file = "analysis/charrun_E13-E20_cqaindices_V01_20260227_VS.csv")
+write_csv(meta, file = "analysis/charrun_META_cqaindicesV01_20260227_VS.csv")
+write_csv(annotation, file = "analysis/charrun_ANOT_cqaindicesV01_20260227_VS.csv")
