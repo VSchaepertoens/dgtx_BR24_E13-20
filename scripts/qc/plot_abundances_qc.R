@@ -58,6 +58,8 @@ if (pngase == "none") {
 save(abundance_data,
      file = paste0("analysis/abundance_data_",pngase,"_qc.RData"))
 
+load(file = paste0("analysis/abundance_data_",pngase,"_qc.RData"))
+
 # subset most abundant glycans --------------------------------------------
 
 abundance_data_subset <- abundance_data %>%
@@ -163,9 +165,9 @@ readr::write_excel_csv(qc_stats_2, "analysis/qc_stats_measurement_phase.csv")
 
 # vertical bar plot -------------------------------------------------------
 
-    ggplot(abundance_data_subset,aes(x = acquisition_number, y = frac_ab)) +
+    ggplot(abundance_data_subset,aes(x = acquisition_number, y = frac_ab, fill = measurement_phase)) +
     geom_col(
-      position = position_dodge(width = 0.9)  
+      position = position_dodge(width = 0.9),
     ) +
     xlab("acquisition number") +
     ylim(0, 40) +
@@ -197,7 +199,7 @@ readr::write_excel_csv(qc_stats_2, "analysis/qc_stats_measurement_phase.csv")
     ) 
 
 
-  ggsave(filename = paste0("figures/quality_control.pdf"),
+  ggsave(filename = paste0("figures/quality_control_measurement_phase.pdf"),
          height = 220,
          width = 160,
          units = "mm",
