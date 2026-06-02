@@ -56,6 +56,7 @@ glycation_data <- glycation_data %>%
 
 # Calculate GI per condition_br_tp
 gi_summary <- glycation_data %>%
+  filter(!experiment_tp %in% c("E17_288", "E17_312")) %>%
   group_by(experiment_tp) %>%
   summarise(
     total_glu = sum(glu * frac_abundance, na.rm = TRUE),
@@ -98,7 +99,7 @@ gi_stats <- gi_summary %>%
   ) 
   # mutate(time_group = if_else(tp == 120, "exponential", "stationary"),
   #        condition = factor(condition, levels = c("STD", "STD+", "LoG", "LoG+", "HiF", "HIP", "HIP+")))
-save(gi_summary, gi_stats, file = "analysis/charrun_E13-E20_glycationindex_V01_20260114_VS.RData")
+save(gi_summary, gi_stats, file = "analysis/charrun_E13-E20_glycationindex_V02_20260602_VS.RData")
 load("analysis/charrun_E13-E20_glycationindex_V01_20260114_VS.RData")
 
 # make wider table --------------------------------------------------------

@@ -2,27 +2,27 @@ library(tidyverse)
 library(here)
 source("scripts/plotting_utils.R", local = FALSE)
 
-input_file_path <- here::here("analysis", "charrun_E13-E20_glycationindex_V01_20260114_VS.RData")
+input_file_path <- here::here("analysis", "charrun_E13-E20_glycationindex_V02_20260602_VS.RData")
 load(file = input_file_path)
 
 glycation_index <- gi_stats %>%
   mutate(index = "Glycation")
 
-input_file_path <- here::here("analysis", "charrun_E13-E20_galactosylationindex_V01_20260114_VS.RData")
+input_file_path <- here::here("analysis", "charrun_E13-E20_galactosylationindex_V02_20260602_VS.RData")
 load(file = input_file_path)
 
 galactosylation_index <- gi_stats %>%
   mutate(index = "Galactosylation")
 
 
-input_file_path <- here::here("analysis", "charrun_E13-E20_fucosylationindex_V01_20260114_VS.RData")
+input_file_path <- here::here("analysis", "charrun_E13-E20_fucosylationindex_V02_20260602_VS.RData")
 load(file = input_file_path)
 
 fucosylation_index <- gi_stats %>%
   mutate(index = "Fucosylation")
 
 
-indices_df <- bind_rows(glycation_index,galactosylation_index,fucosylation_index)
+indices_df <- bind_rows(glycation_index,galactosylation_index,fucosylation_index) 
 
 
 
@@ -72,5 +72,5 @@ ggplot(indices_df,aes(x = tp, group = condition)) +
   ) + 
  theme(legend.position = "none")
 
-ggsave(here("figures/figure1_indices.png"), width = 3, height = 3, dpi = 600, bg = "white")
-ggsave(here("figures/figure1_indices.pdf"), width = 3, height = 3, dpi = 600, bg = "white")
+ggsave(here("figures/figure1_indices_e17_288_312rem.png"), width = 3, height = 3, dpi = 600, bg = "white")
+ggsave(here("figures/figure1_indices_e17_288_312rem.pdf"), width = 3, height = 3, dpi = 600, bg = "white")

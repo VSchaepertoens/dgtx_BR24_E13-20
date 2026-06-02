@@ -39,6 +39,7 @@ corr_abundance_data <- corr_abundance_data %>%
 
 # Calculate GI per condition_br_tp
 gi_summary <- corr_abundance_data %>%
+  filter(!experiment_tp %in% c("E17_288", "E17_312")) %>%
   group_by(experiment_tp) %>%
   summarise(
     total_gal = sum(total_gal, na.rm = TRUE),
@@ -83,7 +84,7 @@ color_mapping_experiment <- c(
 )
 
 
-save(gi_summary, gi_stats, file = "analysis/charrun_E13-E20_galactosylationindex_V01_20260114_VS.RData")
+save(gi_summary, gi_stats, file = "analysis/charrun_E13-E20_galactosylationindex_V02_20260602_VS.RData")
 load("analysis/charrun_E13-E20_galactosylationindex_V01_20260114_VS.RData")
 
 
