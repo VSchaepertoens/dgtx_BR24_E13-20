@@ -377,6 +377,7 @@ ggsave("figures/20251001_TB_cNISTCHO_CharRUns_rem_allTP/subunit_quantification/s
 # average of biological replicates ----------------------------------------
 
 averaged_data_summarized <- data_summarized %>%
+  filter(!experiment_tp %in% c("E17_288", "E17_312")) %>%
   group_by(subunit, condition, timepoint) %>%
   summarise(
     mean_peak_area = mean(peak_area, na.rm = TRUE),
@@ -426,8 +427,8 @@ ggplot(averaged_data_summarized,aes(x = timepoint, group = condition)) +
     linetype = guide_legend(order = 2)
   ) + theme(legend.position = "none")
 
-ggsave(here("figures/figure1_subunits.png"), width = 4, height = 3, dpi = 600, bg = "white")
-ggsave(here("figures/figure1_subunits.pdf"), width = 4, height = 3, dpi = 600, bg = "white")
+ggsave(here("figures/figure1_subunits_E17_288_312rem.png"), width = 4, height = 3, dpi = 600, bg = "white")
+ggsave(here("figures/figure1_subunits_E17_288_312rem.pdf"), width = 4, height = 3, dpi = 600, bg = "white")
 
 
 # build matrix from the subunit data --------------------------------------
