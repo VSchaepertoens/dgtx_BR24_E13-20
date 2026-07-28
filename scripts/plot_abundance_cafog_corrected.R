@@ -160,54 +160,54 @@ data.matrix <- corr_abundance_data %>%
 
 save(corr_abundance_data, data.matrix, file = "analysis/charrun_E13-E20_CQA_V02_20251124_VS.RData")
 
-# filter 120 and 264 tp (just as a comparison with tpp sanity runs)
-data.matrix <- corr_abundance_data %>%
-  filter(timepoint %in% c("120", "264")) %>%
-  select(glycoform1, corr_abundance, experiment_tp) %>%
-  pivot_wider(values_from = corr_abundance,
-              names_from = experiment_tp) %>%
-  column_to_rownames('glycoform1') %>%
-  as.matrix() 
+# # filter 120 and 264 tp (just as a comparison with tpp sanity runs)
+# data.matrix <- corr_abundance_data %>%
+#   filter(timepoint %in% c("120", "264")) %>%
+#   select(glycoform1, corr_abundance, experiment_tp) %>%
+#   pivot_wider(values_from = corr_abundance,
+#               names_from = experiment_tp) %>%
+#   column_to_rownames('glycoform1') %>%
+#   as.matrix() 
+# 
+# save(data.matrix, file = "analysis/charrun_E13-E20_CQA_V04_20251124_VS.RData")
 
-save(data.matrix, file = "analysis/charrun_E13-E20_CQA_V04_20251124_VS.RData")
+# # filter 144 and 288 tp (just as a comparison with peptide mapping)
+# data.matrix <- corr_abundance_data %>%
+#   filter(timepoint %in% c("144", "288")) %>%
+#   select(glycoform1, corr_abundance, experiment_tp) %>%
+#   pivot_wider(values_from = corr_abundance,
+#               names_from = experiment_tp) %>%
+#   column_to_rownames('glycoform1') %>%
+#   as.matrix() 
+# 
+# # Set all negative values to 0
+# data.matrix[data.matrix < 0] <- 0
 
-# filter 144 and 288 tp (just as a comparison with peptide mapping)
-data.matrix <- corr_abundance_data %>%
-  filter(timepoint %in% c("144", "288")) %>%
-  select(glycoform1, corr_abundance, experiment_tp) %>%
-  pivot_wider(values_from = corr_abundance,
-              names_from = experiment_tp) %>%
-  column_to_rownames('glycoform1') %>%
-  as.matrix() 
-
-# Set all negative values to 0
-data.matrix[data.matrix < 0] <- 0
-
-# Apply log2 transformation (adding 1 to avoid log2(0))
-log2_data.matrix <- log2(t(data.matrix + 1)) # should not be transposed, but actually it does not matter! Applies log2 to all numbers and does not care whether samples in rows or in columns. 
-
-#Perform log2 transformation
-log2_data.matrix <- t(as.matrix(log2_data.matrix))
-
-log2_data.matrix
-
-meta <- tibble(sample_name = colnames(data.matrix)) %>%
-  separate(col = sample_name,
-           into = c('experiment', 'timepoint'),
-           sep = "_",
-           remove = FALSE
-  ) %>%
-  mutate(condition = case_when(
-    experiment %in% c('E13', 'E15', 'E17', 'E19') ~ 'constant',
-    experiment %in% c('E14', 'E16', 'E18', 'E20') ~ 'tshifted',
-    TRUE ~ 'other'  # This handles any other experiments, if applicable
-  ),bioprocess_batch = case_when(
-    experiment %in% c('E13', 'E14', 'E15', 'E16') ~ '1',
-    experiment %in% c('E17', 'E18', 'E19', 'E20') ~ '2',
-    TRUE ~ 'other'  # This handles any other experiments, if applicable
-  ))
-
-save(log2_data.matrix, data.matrix, meta, file = "analysis/e13_e20_nglycans_TR.RData")
+# # Apply log2 transformation (adding 1 to avoid log2(0))
+# log2_data.matrix <- log2(t(data.matrix + 1)) # should not be transposed, but actually it does not matter! Applies log2 to all numbers and does not care whether samples in rows or in columns. 
+# 
+# #Perform log2 transformation
+# log2_data.matrix <- t(as.matrix(log2_data.matrix))
+# 
+# log2_data.matrix
+# 
+# meta <- tibble(sample_name = colnames(data.matrix)) %>%
+#   separate(col = sample_name,
+#            into = c('experiment', 'timepoint'),
+#            sep = "_",
+#            remove = FALSE
+#   ) %>%
+#   mutate(condition = case_when(
+#     experiment %in% c('E13', 'E15', 'E17', 'E19') ~ 'constant',
+#     experiment %in% c('E14', 'E16', 'E18', 'E20') ~ 'tshifted',
+#     TRUE ~ 'other'  # This handles any other experiments, if applicable
+#   ),bioprocess_batch = case_when(
+#     experiment %in% c('E13', 'E14', 'E15', 'E16') ~ '1',
+#     experiment %in% c('E17', 'E18', 'E19', 'E20') ~ '2',
+#     TRUE ~ 'other'  # This handles any other experiments, if applicable
+#   ))
+# 
+# save(log2_data.matrix, data.matrix, meta, file = "analysis/e13_e20_nglycans_TR.RData")
 # log2_data.matrix_TR <- log2_data.matrix
 # data.matrix_TR <- data.matrix
 
@@ -277,6 +277,8 @@ clr_data.matrix
 
 save(corr_abundance_data, clr_data.matrix, file = "analysis/charrun_E13-E20_CQA_V05_20260728_VS.RData")
 
+
+load("analysis/charrun_E13-E20_CQA_V04_20251124_VS.RData")
 # plot char runs data -----------------------------------------------------
 # Define the colors
 # color_mapping_experiment <- c(
