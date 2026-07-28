@@ -61,6 +61,7 @@ corr_abundance_data <- abundance_data %>%
            sep = "_",
            remove = FALSE) %>%
   mutate(experiment = factor(experiment, levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")),
+         # this is a bad idea! do not factor the continuous axis!
          timepoint = factor(timepoint, 
                             # levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")
                             levels = c("72", "96", "120", "144", "168", "192","216",
@@ -70,7 +71,6 @@ corr_abundance_data <- abundance_data %>%
   {.}
 
 # save(corr_abundance_data, file = "analysis/corr_abundance_data.RData")
-
 # load("analysis/corr_abundance_data.RData")
 
 # correct_order <- c("none/G0F",
@@ -220,7 +220,7 @@ clr_data.matrix
 
 save(clr_data.matrix, clr_data.matrix, meta, file = "analysis/e13_e20_nglycans_clr.RData")
 save(corr_abundance_data, clr_data.matrix, file = "analysis/charrun_E13-E20_CQA_V03_20251124_VS.RData")
-save(data.matrix, file = "analysis/charrun_E13-E20_CQA_V05_20251124_VS.RData")
+# save(data.matrix, file = "analysis/charrun_E13-E20_CQA_V05_20251124_VS.RData")
 
 
 ##
@@ -254,6 +254,28 @@ clr_data.matrix <- t(as.matrix(clr_data.matrix))
 clr_data.matrix
 
 save(corr_abundance_data, clr_data.matrix, file = "analysis/charrun_E13-E20_CQA_V04_20251124_VS.RData")
+
+
+# removing E17 timepoints 288 and 312 for stats analysis ---------------------------------
+load("analysis/charrun_E13-E20_CQA_V03_20251124_VS.RData")
+corr_abundance_data <- corr_abundance_data %>%
+  filter(!experiment_tp %in% c("E17_288", "E17_312"))
+data.matrix <- NULL
+data.matrix <- corr_abundance_data %>%
+  select(glycoform1, corr_abundance, experiment_tp) %>%
+  pivot_wider(values_from = corr_abundance,
+              names_from = experiment_tp) %>%
+  column_to_rownames('glycoform1') %>%
+  as.matrix() 
+
+# clr transformation
+clr_data.matrix <- clr(t(data.matrix))
+# Convert the CLR-transformed data back to a matrix
+clr_data.matrix <- t(as.matrix(clr_data.matrix))
+
+clr_data.matrix
+
+save(corr_abundance_data, clr_data.matrix, file = "analysis/charrun_E13-E20_CQA_V05_20260728_VS.RData")
 
 # plot char runs data -----------------------------------------------------
 # Define the colors
