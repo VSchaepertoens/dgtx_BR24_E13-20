@@ -218,3 +218,35 @@ clr_data.matrix
 
 save(clr_data.matrix, meta, file = "analysis/charrun_E13-E20_subunit_V02_20260121_VS.RData")
 
+# build matrix from the subunit data, filter E17_288 and E17_312 and transform to clr space-----------
+
+data.matrix <- data_summarized %>%
+  filter(!experiment_tp %in% c("E17_288", "E17_312")) %>%
+  ungroup() %>%
+  mutate(experiment_tp = paste(experiment, timepoint, sep = "_")) %>%
+  select(subunit, experiment_tp, peak_area) %>%
+  pivot_wider(values_from = peak_area,
+              names_from = experiment_tp) %>%
+  column_to_rownames('subunit') %>%
+  as.matrix() 
+
+meta <- tibble(sample_name = colnames(data.matrix)) %>%
+  separate(col = sample_name,
+           into = c('experiment', 'timepoint'),
+           sep = "_",
+           remove = FALSE
+  ) %>%
+  mutate(condition = case_when(
+    experiment %in% c('E13', 'E15', 'E17', 'E19') ~ 'CT',
+    experiment %in% c('E14', 'E16', 'E18', 'E20') ~ 'TS',
+    TRUE ~ 'other'  # This handles any other experiments, if applicable
+  ))
+
+# clr transformation
+clr_data.matrix <- clr(t(data.matrix))
+# Convert the CLR-transformed data back to a matrix
+clr_data.matrix <- t(as.matrix(clr_data.matrix))
+
+clr_data.matrix
+
+save(data.matrix,clr_data.matrix, meta, file = "analysis/charrun_E13-E20_subunit_V03_20260811_VS.RData")
