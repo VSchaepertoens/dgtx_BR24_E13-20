@@ -3,11 +3,11 @@ library(splines)
 library(here)
 source(here::here("scripts", "plotting_utils.R"))
 
-input_file_path <- here::here("analysis", "charrun_E13-E20_subunit_V02_20260121_VS.RData")
+# input_file_path <- here::here("analysis", "charrun_E13-E20_subunit_V02_20260121_VS.RData")
+# 
+# load(file = input_file_path)
 
-load(file = input_file_path)
-
-input_file_path <- here::here("analysis", "charrun_E13-E20_subunit_V01_20260121_VS.RData")
+input_file_path <- here::here("analysis", "charrun_E13-E20_subunit_V03_20260811_VS.RData")
 
 load(file = input_file_path)
 
@@ -51,7 +51,7 @@ ggplot(clr_data_summarized, aes(timepoint, clr_fractional_abundance, color = con
 
   
   # subset data for a single feature
-  filt_data <- clr_data_summarized %>% filter(subunit == "LC") 
+  filt_data <- clr_data_summarized %>% filter(subunit == "LC2") 
   
   filt_data$condition <- factor(filt_data$condition)
   levels(filt_data$condition)
@@ -133,17 +133,22 @@ results_df
 
 # visualise the results with the fitted splines --------------------------
 # create new data for prediction
-pred_df <- expand.grid(
-  timepoint = seq(min(filt_data$timepoint),
+for (s in subunits) {
+  # subset data
+  filt_data <- clr_data_summarized %>%
+    filter(subunit == s)
+  
+  pred_df <- expand.grid(
+    timepoint = seq(min(filt_data$timepoint),
               max(filt_data$timepoint),
               length.out = 200),
-  condition = levels(filt_data$condition)
-)
+    condition = levels(filt_data$condition)
+  )
 
 # get fitted values
-pred_df$spline_fit <- predict(fit_spline, newdata = pred_df)
+  pred_df$spline_fit <- predict(fit_spline, newdata = pred_df)
 
-filt_data$experiment <- factor(filt_data$experiment)
+  filt_data$experiment <- factor(filt_data$experiment)
 
 ggplot(filt_data, aes(timepoint, clr_fractional_abundance, color = condition)) +
   geom_vline(aes(xintercept = 146, linetype = "Temp. shift"),
@@ -161,24 +166,183 @@ ggplot(filt_data, aes(timepoint, clr_fractional_abundance, color = condition)) +
                      name = "Experiment") +
   labs(
     x = "Time [h]",
-    y = "CLR fractional abundance - LC",
+    y = "CLR fractional abundance - LC2",
     linetype = "Temp. shift"
   )
 
+}
 
+
+
+# plot each subunit
+for (s in subunits) {
+  
+  # subset data
+  filt_data <- clr_data_summarized %>%
+    filter(subunit == s) %>%
+    droplevels()
+  
+  # make sure experiment is a factor
+  filt_data$experiment <- factor(filt_data$experiment)
+  
+  # fit the spline model for THIS subunit
+  fit_spline <- lm(
+    clr_fractional_abundance ~ ns(timepoint, df = 3) * condition,
+    data = filt_data
+  )
+  
+  # create new data for prediction
+  pred_df <- expand.grid(
+    timepoint = seq(
+      min(filt_data$timepoint, na.rm = TRUE),
+      max(filt_data$timepoint, na.rm = TRUE),
+      length.out = 200
+    ),
+    condition = levels(filt_data$condition)
+  )
+  
+  # make sure condition has the same factor structure as the model
+  pred_df$condition <- factor(
+    pred_df$condition,
+    levels = levels(filt_data$condition)
+  )
+  
+  # get fitted values
+  pred_df$spline_fit <- predict(
+    fit_spline,
+    newdata = pred_df
+  )
+  
+  # plot
+  p <- ggplot(
+    filt_data,
+    aes(
+      x = timepoint,
+      y = clr_fractional_abundance,
+      color = condition
+    )
+  ) +
+    
+    # temperature shift
+    geom_vline(
+      aes(xintercept = 146, linetype = "Temp. shift"),
+      color = "#58A787",
+      linewidth = 1
+    ) +
+    
+    # observed data
+    geom_point(
+      aes(shape = experiment),
+      alpha = 0.5
+    ) +
+    
+    # fitted splines
+    geom_line(
+      data = pred_df,
+      aes(
+        x = timepoint,
+        y = spline_fit,
+        color = condition,
+        group = condition
+      ),
+      linewidth = 1
+    ) +
+    
+    scale_color_manual(
+      values = color_mapping_condition,
+      breaks = names(color_mapping_condition),
+      name = "Condition"
+    ) +
+    
+    scale_shape_manual(
+      values = 1:nlevels(filt_data$experiment),
+      name = "Experiment"
+    ) +
+    
+    labs(
+      title = paste("Subunit:", s),
+      x = "Time [h]",
+      y = "CLR fractional abundance",
+      linetype = "Temp. shift"
+    ) +
+    
+    theme_classic()
+  
+  print(p)
+}
 # create residual plots, check that residuals are homoscedastic------------------------------------
 
-par(mfrow = c(2, 2))
-plot(fit_spline)
-par(mfrow = c(1, 1))
+# loop over all subunits
 
-filt_data$resid <- resid(fit_spline)
-filt_data$fitted <- fitted(fit_spline)
+for (s in subunits) {
+  
+  # subset data for this subunit
+  
+  filt_data <- clr_data_summarized %>%
+    filter(subunit == s) %>%
+    droplevels()
+  
+  # make sure condition is a factor
+  
+  filt_data$condition <- factor(filt_data$condition)
+  
+  # fit spline model for this subunit
+  
+  fit_spline <- lm(
+    clr_fractional_abundance ~ ns(timepoint, df = 3) * condition,
+    data = filt_data
+  )
+  
+  # --------------------------------------------------
+  
+  # Standard lm diagnostic plots
+  
+  # --------------------------------------------------
+  
+  # Add a title identifying the subunit
+  
+  old_par <- par(mfrow = c(2, 2))
+  plot(
+    fit_spline,
+    main = paste("Subunit:", s)
+  )
+  par(old_par)
+  
+  # --------------------------------------------------
+  
+  # Residuals and fitted values
+  
+  # --------------------------------------------------
+  
+  filt_data$resid <- resid(fit_spline)
+  filt_data$fitted <- fitted(fit_spline)
+  
+  # Custom residual vs fitted plot
+  
+  p <- ggplot(
+    filt_data,
+    aes(
+      x = fitted,
+      y = resid,
+      color = condition
+    )
+  ) +
+    geom_point(alpha = 0.6) +
+    geom_hline(
+      yintercept = 0,
+      linetype = "dashed"
+    ) +
+    labs(
+      title = paste("Residuals vs fitted:", s),
+      x = "Fitted values",
+      y = "Residuals",
+      color = "Condition"
+    ) +
+    theme_classic()
+  
+  print(p)
+}
 
-ggplot(filt_data, aes(fitted, resid, color = condition)) +
-  geom_point(alpha = 0.6) +
-  geom_hline(yintercept = 0, linetype = "dashed") +
-  labs(x = "Fitted values", y = "Residuals")
 
 
 
