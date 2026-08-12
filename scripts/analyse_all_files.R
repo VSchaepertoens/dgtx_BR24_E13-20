@@ -1,7 +1,7 @@
 ## ---------------------------
 ##
 ## Script name: Quantification of fractional abundances of glycans found in 
-## prelimnary DoE DGTX experiments
+## DGTX NISTCHo characterization experiments
 ##
 ## Purpose of script: Using fragquaxi package to quantify glycans in samples
 ##
@@ -49,17 +49,14 @@ df <- tibble(mzml_full_path = dir_ls(path = "data/",regexp =  ".*\\.mzML"),) %>%
   filter(grepl(pngase, filename, ignore.case = TRUE)) %>%
   mutate(sample_name = str_extract(filename, "([^_]+_[^_]+_[^_]+_[^_]+_[^_]+_[^_]+)"))
 # df <- df[1:195,] # for pngase to remove reference nistmab
-
-
-
   
 fs::dir_create(df$analysis_path)
 
 # load cs and rt data -----------------------------------------------------
 
 cs_rt_data <- read_csv("data/rt_seconds.csv") %>%
+  filter(pngase == !!pngase) %>%
   # filter(grepl(pngase, sample_name, ignore.case = TRUE)) %>%
-  filter(pngase == "pngase") %>%
   mutate(sample_name = str_extract(sample_name, "([^_]+_[^_]+_[^_]+_[^_]+_[^_]+_[^_]+)"))
 
 # merge df and cs_rt_data ------------------------------------------------
