@@ -65,4 +65,4 @@ for (coef in coefs) {
 
 ## Remove NAs from glycan library manually
 ## Run CAFOG analysis using subprocess_cafog.ipynb from Anaconda --> vs studio
-## Continue with plotting the corrected results --> plot_cafog_corrected.R
+## Continue with plotting the corrected results --> plot_abundance_cafog_corrected.R
