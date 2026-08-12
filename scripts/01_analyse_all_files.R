@@ -26,7 +26,7 @@ library(tidyverse)
 
 # define analysis of pngase F digested or not digested data ---------------
 
-pngase <- "pngase" # "none" or "pngase"
+pngase <- "none" # "none" or "pngase"
 
 # constants ---------------------------------------------------------------
 
