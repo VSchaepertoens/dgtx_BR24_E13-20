@@ -8,124 +8,94 @@ library(WriteXLS)
 library(compositions)
 library(ggpattern)
 
-# load cafog corrected data -----------------------------------------------
-
-abundance_data <- NULL
-# Specify the directory path
-directory_path <- "analysis/cafog/"
-
-# List all directories in the specified path
-folders <- dir_ls(directory_path, type = "directory")
-
-for (folder in folders) {
-  file_path <- paste0(folder,"/results.csv")
-  
-  abundance_data <- rbind(abundance_data,
-                          read_csv(file_path,
-                                   n_max = 10) %>%
-                            mutate(experiment_tp = str_extract(folder, "[^/]+$")) %>%
-                            {.}
-  )
-}
-
-corr_abundance_data <- abundance_data %>%
-  separate(
-    glycoform,
-    into = c("glycoform1", "glycoform2",  "glycoform3"),
-    sep = "\\s+or\\s+",
-    remove = FALSE
-  ) %>%
-  select(glycoform1, corr_abundance, corr_abundance_error, experiment_tp) %>%
-  mutate(glycoform1 = str_replace_all(glycoform1, "A2", ""))  %>%
-  mutate(glycoform1 = str_replace_all(glycoform1, c("G0F/G2F" = "G1F/G1F", 
-                                                    "G2F/none" = "none/G2F",
-                                                    "G1F/none" = "none/G1F", 
-                                                    "G0F/none" = "none/G0F", 
-                                                    "G0/none" = "none/G0")
-                                      )) %>%
-  mutate(glycoform1 = factor(glycoform1, levels = c("none/G0F",
-                                                    "none/G1F",
-                                                    "none/G2F",
-                                                    "G0/G0",
-                                                    "G0/G0F",
-                                                    "G0F/G0F",
-                                                    "G0F/G1F",
-                                                    "G1F/G1F",
-                                                    "G1F/G2F",
-                                                    "G2F/G2F")
-                             )) %>%
-  separate(experiment_tp,
-           into = c("experiment",
-                    "timepoint"
-           ),
-           sep = "_",
-           remove = FALSE) %>%
-  mutate(experiment = factor(experiment, levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")),
-         # this is a bad idea! do not factor the continuous axis!
-         timepoint = factor(timepoint, 
-                            # levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")
-                            levels = c("72", "96", "120", "144", "168", "192","216",
-                                       "240", "264", "288", "312", "336", "360"))) %>%
-  # filter(experiment != "E17")
-  # drop_na()
-  {.}
+# # load cafog corrected data (only needs to be done once) -----------------------------------------------
+# 
+# abundance_data <- NULL
+# # Specify the directory path
+# directory_path <- "analysis/cafog/"
+# 
+# # List all directories in the specified path
+# folders <- dir_ls(directory_path, type = "directory")
+# 
+# for (folder in folders) {
+#   file_path <- paste0(folder,"/results.csv")
+#   
+#   abundance_data <- rbind(abundance_data,
+#                           read_csv(file_path,
+#                                    n_max = 10) %>%
+#                             mutate(experiment_tp = str_extract(folder, "[^/]+$")) %>%
+#                             {.}
+#   )
+# }
+# 
+# corr_abundance_data <- abundance_data %>%
+#   separate(
+#     glycoform,
+#     into = c("glycoform1", "glycoform2",  "glycoform3"),
+#     sep = "\\s+or\\s+",
+#     remove = FALSE
+#   ) %>%
+#   select(glycoform1, corr_abundance, corr_abundance_error, experiment_tp) %>%
+#   mutate(glycoform1 = str_replace_all(glycoform1, "A2", ""))  %>%
+#   mutate(glycoform1 = str_replace_all(glycoform1, c("G0F/G2F" = "G1F/G1F", 
+#                                                     "G2F/none" = "none/G2F",
+#                                                     "G1F/none" = "none/G1F", 
+#                                                     "G0F/none" = "none/G0F", 
+#                                                     "G0/none" = "none/G0")
+#                                       )) %>%
+#   mutate(glycoform1 = factor(glycoform1, levels = c("none/G0F",
+#                                                     "none/G1F",
+#                                                     "none/G2F",
+#                                                     "G0/G0",
+#                                                     "G0/G0F",
+#                                                     "G0F/G0F",
+#                                                     "G0F/G1F",
+#                                                     "G1F/G1F",
+#                                                     "G1F/G2F",
+#                                                     "G2F/G2F")
+#                              )) %>%
+#   separate(experiment_tp,
+#            into = c("experiment",
+#                     "timepoint"
+#            ),
+#            sep = "_",
+#            remove = FALSE) %>%
+#   mutate(experiment = factor(experiment, levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20"))
+#          # # this is a bad idea! do not factor the continuous axis!
+#          # timepoint = factor(timepoint, 
+#          #                    # levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")
+#          #                    levels = c("72", "96", "120", "144", "168", "192","216",
+#          #                               "240", "264", "288", "312", "336", "360"))
+#          ) %>%
+# 
+#   {.}
 
 # save(corr_abundance_data, file = "analysis/corr_abundance_data.RData")
-# load("analysis/corr_abundance_data.RData")
+load("analysis/corr_abundance_data.RData")
 
-# correct_order <- c("none/G0F",
-#                    "none/G1F",
-#                    "none/G2F",
-#                    "G0/G0",
-#                    "G0/G0F",
-#                    "G0F/G0F",
-#                    "G0F/G1F",
-#                    "G1F/G1F",
-#                    "G1F/G2F",
-#                    "G2F/G2F")
+
+# check missing annotations (only needs to be done once)-----------------------------------------------
+
+# #check missing glycan annotations
+# corr_abundance_data %>%
+#   filter(experiment_tp %in% "E13_336")
 # 
+# # corr_abundance_data_fixed <- corr_abundance_data
+# corr_abundance_data_fixed <- corr_abundance_data_fixed %>%
+#   mutate(
+#     glycoform1 = if_else(
+#       experiment_tp == "E13_336" & is.na(glycoform1),
+#       # experiment_tp == "E19_216" & glycoform1 == "G1/G2F",
+#       "none/G1F",   # <-- replace this with the correct annotation
+#       glycoform1
+#     )
+#   )
 # 
+# corr_abundance_data_fixed %>%
+#   filter(experiment_tp %in% "E13_336")
 # 
-# corr_abundance_data <- corr_abundance_data %>%
-#   # drop_na() %>%
-#   mutate(experiment = factor(experiment, 
-#                              levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")
-#                              )) %>%
-#   # filter(experiment != c("E17")) %>%
-#   group_by(experiment, timepoint) %>%
-#   arrange(match(glycoform1, correct_order)) %>%
-#   ungroup() %>%
-#   arrange(experiment_tp) %>%
-#   {.}
+# corr_abundance_data <- corr_abundance_data_fixed
 # 
-# write_csv(x = corr_abundance_data,
-#           file = "analysis/corr_abundance_data_4tp.csv")
-# WriteXLS(x = corr_abundance_data,
-#          ExcelFileName = "analysis/corr_abundance_data_4tp.xls")
-
-
-# check missing annotations -----------------------------------------------
-
-#check missing glycan annotations
-corr_abundance_data %>%
-  filter(experiment_tp %in% "E13_336")
-
-# corr_abundance_data_fixed <- corr_abundance_data
-corr_abundance_data_fixed <- corr_abundance_data_fixed %>%
-  mutate(
-    glycoform1 = if_else(
-      experiment_tp == "E13_336" & is.na(glycoform1),
-      # experiment_tp == "E19_216" & glycoform1 == "G1/G2F",
-      "none/G1F",   # <-- replace this with the correct annotation
-      glycoform1
-    )
-  )
-
-corr_abundance_data_fixed %>%
-  filter(experiment_tp %in% "E13_336")
-
-corr_abundance_data <- corr_abundance_data_fixed
-
 #ensures correct order of glycoforms
 corr_abundance_data <- corr_abundance_data %>%
   mutate(glycoform1 = factor(glycoform1, levels = c("none/G0F",
@@ -159,57 +129,7 @@ data.matrix <- corr_abundance_data %>%
   as.matrix() 
 
 save(corr_abundance_data, data.matrix, file = "analysis/charrun_E13-E20_CQA_V02_20251124_VS.RData")
-
-# # filter 120 and 264 tp (just as a comparison with tpp sanity runs)
-# data.matrix <- corr_abundance_data %>%
-#   filter(timepoint %in% c("120", "264")) %>%
-#   select(glycoform1, corr_abundance, experiment_tp) %>%
-#   pivot_wider(values_from = corr_abundance,
-#               names_from = experiment_tp) %>%
-#   column_to_rownames('glycoform1') %>%
-#   as.matrix() 
-# 
-# save(data.matrix, file = "analysis/charrun_E13-E20_CQA_V04_20251124_VS.RData")
-
-# # filter 144 and 288 tp (just as a comparison with peptide mapping)
-# data.matrix <- corr_abundance_data %>%
-#   filter(timepoint %in% c("144", "288")) %>%
-#   select(glycoform1, corr_abundance, experiment_tp) %>%
-#   pivot_wider(values_from = corr_abundance,
-#               names_from = experiment_tp) %>%
-#   column_to_rownames('glycoform1') %>%
-#   as.matrix() 
-# 
-# # Set all negative values to 0
-# data.matrix[data.matrix < 0] <- 0
-
-# # Apply log2 transformation (adding 1 to avoid log2(0))
-# log2_data.matrix <- log2(t(data.matrix + 1)) # should not be transposed, but actually it does not matter! Applies log2 to all numbers and does not care whether samples in rows or in columns. 
-# 
-# #Perform log2 transformation
-# log2_data.matrix <- t(as.matrix(log2_data.matrix))
-# 
-# log2_data.matrix
-# 
-# meta <- tibble(sample_name = colnames(data.matrix)) %>%
-#   separate(col = sample_name,
-#            into = c('experiment', 'timepoint'),
-#            sep = "_",
-#            remove = FALSE
-#   ) %>%
-#   mutate(condition = case_when(
-#     experiment %in% c('E13', 'E15', 'E17', 'E19') ~ 'constant',
-#     experiment %in% c('E14', 'E16', 'E18', 'E20') ~ 'tshifted',
-#     TRUE ~ 'other'  # This handles any other experiments, if applicable
-#   ),bioprocess_batch = case_when(
-#     experiment %in% c('E13', 'E14', 'E15', 'E16') ~ '1',
-#     experiment %in% c('E17', 'E18', 'E19', 'E20') ~ '2',
-#     TRUE ~ 'other'  # This handles any other experiments, if applicable
-#   ))
-# 
-# save(log2_data.matrix, data.matrix, meta, file = "analysis/e13_e20_nglycans_TR.RData")
-# log2_data.matrix_TR <- log2_data.matrix
-# data.matrix_TR <- data.matrix
+# load(file = "analysis/charrun_E13-E20_CQA_V02_20251124_VS.RData")
 
 # clr transformation
 clr_data.matrix <- clr(t(data.matrix))
@@ -218,20 +138,9 @@ clr_data.matrix <- t(as.matrix(clr_data.matrix))
 
 clr_data.matrix
 
-save(clr_data.matrix, clr_data.matrix, meta, file = "analysis/e13_e20_nglycans_clr.RData")
+# save(clr_data.matrix, clr_data.matrix, meta, file = "analysis/e13_e20_nglycans_clr.RData")
 save(corr_abundance_data, clr_data.matrix, file = "analysis/charrun_E13-E20_CQA_V03_20251124_VS.RData")
 # save(data.matrix, file = "analysis/charrun_E13-E20_CQA_V05_20251124_VS.RData")
-
-
-##
-data.matrix_tosave <- data.matrix %>% 
-  as.data.frame() %>%
-  mutate(modcom = rownames(data.matrix)) 
-
-write_csv(data.matrix_tosave, 
-          file = "analysis/corr_abundance_data_matrix.csv")
-WriteXLS(x = data.matrix_tosave,
-         ExcelFileName = "analysis/corr_abundance_data_matrix.xls")
 
 
 # removing E16 and E17 for stats analysis ---------------------------------
@@ -278,19 +187,8 @@ clr_data.matrix
 save(corr_abundance_data, clr_data.matrix, file = "analysis/charrun_E13-E20_CQA_V05_20260728_VS.RData")
 
 
-load("analysis/charrun_E13-E20_CQA_V04_20251124_VS.RData")
 # plot char runs data -----------------------------------------------------
-# Define the colors
-# color_mapping_experiment <- c(
-#   "E13" = "#e41a1c",
-#   "E14" = "#377eb8",
-#   "E15" = "#4daf4a",
-#   "E16" = "#984ea3",
-#   "E17" = "#ff7f00",
-#   "E18" = "#ffff33",
-#   "E19" = "#a65628",
-#   "E20" = "#f781bf"
-# )
+load("analysis/charrun_E13-E20_CQA_V05_20260728_VS.RData")
 
 color_mapping_experiment <- c(
   "E13" = "#FD8D3C",
@@ -302,10 +200,6 @@ color_mapping_experiment <- c(
   "E19" = "#A63603",
   "E20" = "#54278F"
 )
-# #from Larissa
-# c("#FDAE6B", "#FD8D3C", "#F16913", "#D94801", "#A63603")
-# c("#BCBDDC", "#9E9AC8", "#807DBA", "#6A51A3", "#54278F")
-
 
 
 plot_bars <- function(data,
@@ -347,9 +241,6 @@ plot_bars <- function(data,
     NULL
   }
   
-
-
-
 ## plot all experiments
 plot_bars(corr_abundance_data,
           title = "Fractional abundance of glycans in all experiments",
