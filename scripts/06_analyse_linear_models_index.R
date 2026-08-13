@@ -30,7 +30,7 @@ index_type <- "fucosylation"  # <-- CHANGE THIS LINE FOR DIFFERENT INDICES
 # Set file path and display names based on index_type
 # input_file_path <- here::here("analysis", paste0("charrun_E13-E20_", index_type, "index_V01_20260114_VS.RData"))
 input_file_path <- file.path(project_root, "analysis", 
-                             paste0("charrun_E13-E20_", index_type, "index_V01_20260114_VS.RData"))
+                             paste0("charrun_E13-E20_", index_type, "index_V02_20260602_VS.RData"))
 load(file = input_file_path)
 
 # Determine display name and value column
@@ -399,8 +399,8 @@ combined_summary <- data.frame(
   )
 )
 
-# write.csv(combined_summary, paste0(base_filename, "_combined_summary.csv"), row.names = FALSE)
-# cat("\n✓ Combined summary saved to:", paste0(base_filename, "_combined_summary.csv"), "\n")
+write.csv(combined_summary, paste0(base_filename, "_combined_summary.csv"), row.names = FALSE)
+cat("\n✓ Combined summary saved to:", paste0(base_filename, "_combined_summary.csv"), "\n")
 
 #---------------------------------------------------------------------------
 # Table 2: Model Fit Summary
@@ -427,8 +427,8 @@ model_fit_stats <- data.frame(
   )
 )
 
-# write.csv(model_fit_stats, paste0(base_filename, "_model_fit.csv"), row.names = FALSE)
-# cat("✓ Model fit statistics saved to:", paste0(base_filename, "_model_fit.csv"), "\n")
+write.csv(model_fit_stats, paste0(base_filename, "_model_fit.csv"), row.names = FALSE)
+cat("✓ Model fit statistics saved to:", paste0(base_filename, "_model_fit.csv"), "\n")
 
 # cat("\nResults saved to directory:", output_dir, "\n")
 
