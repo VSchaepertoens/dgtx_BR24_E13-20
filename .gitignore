@@ -11,3 +11,6 @@
 /presentations
 /results
 /scripts/**/*.html
+/scripts/archive
+/manuscript
+.idea/

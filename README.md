@@ -9,7 +9,7 @@
 Below is an overview of the purpose and outputs of each script:
   - mAb subunits analysis:
     - `/00_subunits_plot_heatmaps.R` : Collects all data for subunits (LC, LC2, intact mAb) and plots lineplot. Saves data as charrun_E13-E20_subunit_V0x_YYYYMMDD_VS.RData. 
-    - `/01_analyse_linear_models_subunit.R`: Uses linear models to test for differences in subunit abundances between conditions and timepoints. 
+    - `/01_analyse_linear_models_subunit.R`: Uses linear models and natural cubic splines for the timecourse, to test for differences in subunit abundances between conditions and timepoints. 
   
   - N-glycans abundance analysis:
     - `/01_analyse_all_files.R`: Using the package fragquaxi [fragquaxi](https://github.com/cdl-biosimilars/fragquaxi), quantifies the abundance of N-glycans in the input mzml files. For quantification of glycation in PNGaseF-digested mzml files, change line 29 to "pngase". 
@@ -17,15 +17,21 @@ Below is an overview of the purpose and outputs of each script:
     - `/03_prepare_data_cafog.R`: Assembles all data required for the CAFOG analysis in the folder analysis/cafog. 
       - `/subprocess_cafog.ipynb`: Uses the hexose bias correction algorithm [cafog](https://github.com/cdl-biosimilars/cafog) to correct N-glycan abundances for hexosylation bias.
     - `/04_plot_abundance_cafog_corrected.R`: Plots the corrected N-glycan abundances for all experiments and individual biological replicates and saves all corrected N-glycan abundances as corr_abundance_data.RData and charrun_E13-E20_CQA_V0x_YYYYMMDD_VS.RData.
-    - `/05_analyse_splineomics.R`: Uses linear models to test for differences in N-glycan abundances between conditions and timepoints. 
+    - `/05_analyse_splineomics.R`: Uses linear models and natural cubic splines for the timecourse, to test for differences in N-glycan abundances between conditions and timepoints. 
 
-    - Calculate galactosylation, fucosylation and glycation indices:
-      - `/galactosylation_index.R`:
-      - `/fucosylation_index.R`:
-      - `/glycation_index.R`:
-    - `/06_analyse_linear_models_index.R`: Uses linear models to test for differences in indices between conditions and timepoints. 
-
-
+  - Galactosylation, fucosylation and glycation indices & analysis:
+    - `/06_galactosylation_index.R`: With a maximal number of 4 potential galactosylation sites, calculates the index of actual occupied galactosylation sites. 
+    - `/07_fucosylation_index.R`:  With a maximal number of 2 potential fucosylation sites, calculates the index of actual occupied fucosylation sites. 
+    - `/08_glycation_index.R`: With a maximal number of 3 potential glycation sites, calculates the index of actual occupied glycation sites. 
+    - `/09_analyse_linear_models_index.R`: Uses linear models and natural cubic splines for the timecourse, to test for differences in indices between conditions and timepoints.
+    
+  - Final plots:
+    - `/10_plot_indices.R`: Combines the glycation, galactosylation, and fucosylation index results and generates a faceted time-course plot showing the mean index ± standard error for each experimental condition. The plot also marks the transition from TS to 32 °C and is exported as PNG and PDF.
+    - `/11_plot_nglycans.R`: Loads N-glycans abundance results and generates a faceted time-course plot showing the mean index ± standard error for each experimental condition for 4 selected glycoforms. The plot also marks the transition from TS to 32 °C and is exported as PNG and PDF.    
+  - Utility scripts:
+    - `/plotting_utility.R`:
+     
+     
 
 **Note: Copy [subprocess_cafog.ipynb](subprocess_cafog.ipynb) to cafog folder to run directly from the source & base_folder in .ipynb must be changed to match the directory of `analysis/cafog`.
 
