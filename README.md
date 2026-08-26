@@ -1,7 +1,11 @@
 # DGTX Project NISTCHO Characterization 
 # Analysis of mAb subunits and N-glycans on intact mAb level
 ## 📄 Overview
-(Abstract of the paper)
+This repository contains the analysis workflow for the DGTX project NISTCHO characterization, inclduing the analysis of cNISTmAb subunits and N-glycosylation across constant-temperature (CT) and temperature-shifted (TS) bioprocess conditions. The workflow covers processing and correction of glycan abundance data, compositional data analysis using CLR transformation, exploratory visualization, calculation of indices, and statistical analysis of temporal changes.
+
+The analysis is organized into sequential R scripts that generate intermediate datasets, figures, statistical results, and reports. SplineOmics is used to identify and characterize time-dependent changes in individual glycoforms, while dedicated index analyses summarize higher-level changes in galactosylation, fucosylation, and glycation over the course of the bioprocess.
+
+The resulting outputs include publication-ready visualizations, statistical summaries, spline-model results, and analysis tables describing differences between CT and TS conditions and their temporal trajectories.
 
 ## 🗂 Repository Structure
 
@@ -39,7 +43,7 @@ Below is an overview of the purpose and outputs of each script:
 
 The full raw dataset for this study is archived and publicly available on Zenodo:
   
-  Zenodo DOI:[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21643681.svg)](https://doi.org/10.5281/zenodo.21643681  [Add to Citavi project by DOI] )
+  Zenodo DOI:[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21643681.svg)](https://doi.org/10.5281/zenodo.21643681)
 
 The processed data provided in this repository were generated entirely from the Zenodo data using the scripts in /scripts.
 
