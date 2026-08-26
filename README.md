@@ -9,6 +9,7 @@ The resulting outputs include publication-ready visualizations, statistical summ
 
 - **CT**: constant-temperature bioprocess condition
 - **TS**: temperature-shifted bioprocess condition
+
 The temperature shift to 32 °C occurs at 146 h.
 
 ## 🗂 Repository Structure
@@ -27,22 +28,21 @@ Below is an overview of the purpose and outputs of each script:
     - `/04_plot_abundance_cafog_corrected.R`: Processes CAFOG-corrected glycan abundances, prepares compositional data for statistical analysis using CLR transformation, and generates visualizations of N-glycan composition across experiments and timepoints. The script produces bar plots, time-course plots, heatmaps, and focused comparisons of glycoform abundances between constant-temperature and temperature-shifted conditions. Saves data as corr_abundance_data.RData and charrun_E13-E20_CQA_V0x_YYYYMMDD_VS.RData.
     - `/05_analyse_splineomics.R`: Performs time-course differential analysis of N-glycan abundances using SplineOmics [SplineOmics](https://github.com/csbg/SplineOmics) at the individual glycoform level. The script accounts for bioprocess batch effects, explores the data, fits limma-based natural cubic spline models to test time, condition, and interaction effects, and generates statistical and clustering reports with visualizations of significant glycoform trajectories. 
     
-  - N-glycans quality control:
-    - `/scripts/analyse_all_files_qc.R`: Using the package fragquaxi [fragquaxi](https://github.com/cdl-biosimilars/fragquaxi), quantifies glycan proteoforms in reference NISTmAb (RM8671) (https://www.nist.gov/programs-projects/nist-monoclonal-antibody-reference-material-8671) for quality control experiments. The script identifies and processes mzML files, defines the relevant glycan compositions, quantifies ion abundances within specified retention-time windows, calculates fractional glycan abundances, generates diagnostic ion plots, and saves the results for each sample. 
-    - `/scripts/plot_abundances_qc.R`: Aggregates N-glycan abundances from qc files, calculates mean and standard deviation across technical replicates, and organizes the data by glycan composition. The script saves the processed data (abundance_data_none_qc.RData) and generates bar plots and time-course visualizations of glycan abundances. 
-    
   - Galactosylation, fucosylation and glycation indices & analysis:
     - `/06_galactosylation_index.R`: Calculates the galactosylation index from CAFOG-corrected N-glycan abundances for each experiment and timepoint, summarizes mean and variability for constant-temperature and temperature-shifted conditions, and generates time-course visualizations showing individual experiments and condition-level trends. 
     - `/07_fucosylation_index.R`:  Calculates the fucosylation index from CAFOG-corrected N-glycan abundances for each experiment and timepoint, summarizes mean and variability for constant-temperature and temperature-shifted conditions, and generates time-course visualizations showing individual experiments and condition-level trends. 
     - `/08_glycation_index.R`: Calculates the glycation index from CAFOG-corrected N-glycan abundances for each experiment and timepoint, summarizes mean and variability for constant-temperature and temperature-shifted conditions, and generates time-course visualizations showing individual experiments and condition-level trends. 
     - `/09_analyse_linear_models_index.R`: Performs spline-based statistical analysis of aggregate glycosylation indices (galactosylation, fucosylation, or glycation) over time, comparing constant-temperature and temperature-shifted conditions. The script assesses linearity and outliers, fits natural cubic spline models, tests time, condition, and time × condition interaction effects, calculates trajectory and divergence metrics (cT, CV, cDT), generates fitted trajectory and diagnostic plots, and exports statistical and model-fit summaries.
     
+  - N-glycans quality control:
+    - `/scripts/analyse_all_files_qc.R`: Using the package fragquaxi [fragquaxi](https://github.com/cdl-biosimilars/fragquaxi), quantifies glycan proteoforms in reference NISTmAb (RM8671) (https://www.nist.gov/programs-projects/nist-monoclonal-antibody-reference-material-8671) for quality control experiments. The script identifies and processes mzML files, defines the relevant glycan compositions, quantifies ion abundances within specified retention-time windows, calculates fractional glycan abundances, generates diagnostic ion plots, and saves the results for each sample. 
+    - `/scripts/plot_abundances_qc.R`: Aggregates N-glycan abundances from qc files, calculates mean and standard deviation across technical replicates, and organizes the data by glycan composition. The script saves the processed data (abundance_data_none_qc.RData) and generates bar plots and time-course visualizations of glycan abundances. 
+    
   - Final plots:
     - `/10_plot_indices.R`: Combines the glycation, galactosylation, and fucosylation index results and generates a faceted time-course plot showing the mean index ± standard error for each experimental condition. The plot also marks the transition from TS to 32 °C and is exported as PNG and PDF.
     - `/11_plot_nglycans.R`: Loads N-glycans abundance results and generates a faceted time-course plot showing the mean index ± standard error for each experimental condition for 4 selected glycoforms. The plot also marks the transition from TS to 32 °C and is exported as PNG and PDF.    
   - Utility scripts:
     - `/plotting_utils.R`: Defines shared plotting utilities, including the color mapping for experimental conditions (CT and TS) and a standardized ggplot2 theme used across figures.
-     
      
 
 **Note: Copy [subprocess_cafog.ipynb](subprocess_cafog.ipynb) to cafog folder to run directly from the source & base_folder in .ipynb must be changed to match the directory of `analysis/cafog`.
