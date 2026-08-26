@@ -7,7 +7,7 @@ load(file = "analysis/charrun_E13-E20_CQA_V05_20260728_VS.RData")
 
 #data.matrix <- clr_data.matrix
 
-meta <- tibble(sample_name = colnames(clr_data.matrix)) %>%
+meta <- tibble(sample_name = colnames(data.matrix)) %>%
   separate(col = sample_name,
            into = c('experiment', 'Time'),
            sep = "_",
@@ -26,7 +26,7 @@ meta <- tibble(sample_name = colnames(clr_data.matrix)) %>%
     ))
 
 annotation <- data.frame(
-  glycoform = rownames(clr_data.matrix)
+  glycoform = rownames(data.matrix)
 ) %>%
   mutate(glycoform = gsub("/", " · ", glycoform)
          )
@@ -47,7 +47,7 @@ report_dir <- here::here("analysis", "results")
 
 # splineomics now contains the SplineOmics object.
 splineomics <- SplineOmics::create_splineomics(
-  data = clr_data.matrix,
+  data = data.matrix,
   meta = meta,
   annotation = annotation,
   report_info = report_info,
