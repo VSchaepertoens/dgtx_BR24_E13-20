@@ -5,7 +5,7 @@ library(here)
 
 # loading the data --------------------------------------------------------
 
-load("analysis/charrun_E13-E20_CQA_V02_20251124_VS.RData")
+load("analysis/charrun_E13-E20_CQA_V05_20260728_VS.RData")
 
 
 
