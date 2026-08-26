@@ -184,7 +184,7 @@ clr_data.matrix <- t(as.matrix(clr_data.matrix))
 
 clr_data.matrix
 
-save(corr_abundance_data, clr_data.matrix, file = "analysis/charrun_E13-E20_CQA_V05_20260728_VS.RData")
+save(corr_abundance_data, clr_data.matrix,data.matrix, file = "analysis/charrun_E13-E20_CQA_V05_20260728_VS.RData")
 
 
 # plot char runs data -----------------------------------------------------

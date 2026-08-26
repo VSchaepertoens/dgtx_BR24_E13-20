@@ -3,11 +3,11 @@ library(SplineOmics)
 library(dplyr)
 library(here)
 
-load(file = "analysis/charrun_E13-E20_CQA_V02_20251124_VS.RData")
+load(file = "analysis/charrun_E13-E20_CQA_V05_20260728_VS.RData")
 
 #data.matrix <- clr_data.matrix
 
-meta <- tibble(sample_name = colnames(data.matrix)) %>%
+meta <- tibble(sample_name = colnames(clr_data.matrix)) %>%
   separate(col = sample_name,
            into = c('experiment', 'Time'),
            sep = "_",
@@ -26,15 +26,15 @@ meta <- tibble(sample_name = colnames(data.matrix)) %>%
     ))
 
 annotation <- data.frame(
-  glycoform = rownames(data.matrix)
+  glycoform = rownames(clr_data.matrix)
 ) %>%
   mutate(glycoform = gsub("/", " · ", glycoform)
          )
 
 # creating report header ------------------------
 report_info <- list(
-  omics_data_type = "N-glycans",
-  data_description = "N-glycan data of CHO cells - DGTX characterization runs",
+  omics_data_type = "clr-transformed N-glycans",
+  data_description = "clr-transformed N-glycan data of CHO cells - DGTX characterization runs",
   data_collection_date = "April 2026",
   analyst_name = "Veronika Schäpertöns",
   contact_info = "veronika.schaepertoens@plus.ac.at",
@@ -47,7 +47,7 @@ report_dir <- here::here("analysis", "results")
 
 # splineomics now contains the SplineOmics object.
 splineomics <- SplineOmics::create_splineomics(
-  data = data.matrix,
+  data = clr_data.matrix,
   meta = meta,
   annotation = annotation,
   report_info = report_info,
