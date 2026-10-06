@@ -10,12 +10,7 @@ pngase <- "none" # "none" or "pngase"
 
 samples_table <- read_csv(paste0("analysis/overview_",pngase,"_merged.csv")) %>%
   filter(filename.x != "20251002_TB_cnistcho_E13_312_none_1_336.mzML") %>% #possibly an outlier
-  filter(filename.x != "20251113_TB_cnistcho_E20_288_none_3_1368.mzML") %>% #possibly an outlier
-  # filter(filename.x != "20251113_TB_cnistcho_E20_288_none_2_1367.mzML") %>% #possibly an outlier
-  
-  # filter(sample_name != "20251002_TB_Nistmab_150mg_l_pngase") %>% # nistmab control
-  
-  {.}
+    {.}
 
 # load abundances using a for loop  ---------------------------------------
 
