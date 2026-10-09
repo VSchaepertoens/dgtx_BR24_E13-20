@@ -8,7 +8,7 @@ source("scripts/plotting_utils.R", local = FALSE)
 
 # load abundance data -----------------------------------------------------
 
-load("analysis/charrun_E13-E20_CQA_V02_20251124_VS.RData")
+load("analysis/charrun_E13-E20_CQA_V06_20261006_VS.RData")
 
 # calculate GI ---------------------------------------------------------
 
@@ -84,7 +84,7 @@ color_mapping_experiment <- c(
 )
 
 
-save(gi_summary, gi_stats, file = "analysis/charrun_E13-E20_galactosylationindex_V02_20260602_VS.RData")
+save(gi_summary, gi_stats, file = "analysis/charrun_E13-E20_galactosylationindex_V03_20261006_VS.RData")
 load("analysis/charrun_E13-E20_galactosylationindex_V01_20260114_VS.RData")
 
 
@@ -216,14 +216,14 @@ ggplot() +
     legend.text = element_text(size = 10),
     legend.box = "horizontal"
   )
-  
-  
-  ggsave(filename = "figures/galactosylation_index_lineplot.png",
-         width = 170,
-         height = 100,
-         units = "mm",
-         dpi = 600,
-         bg = "white")
+
+
+ggsave(filename = "figures/galactosylation_index_lineplot.png",
+       width = 170,
+       height = 100,
+       units = "mm",
+       dpi = 600,
+       bg = "white")
 
 # make wider table --------------------------------------------------------
 gi_stats_wider <- gi_stats %>% 
@@ -233,12 +233,12 @@ gi_stats_wider <- gi_stats %>%
   ) %>%
   select(condition,tp, mean_GI, sd_GI) %>%
   pivot_wider(values_from = c(mean_GI, sd_GI), 
-                         names_from = tp,
-                         names_glue = "{.value}_{tp}") %>%
+              names_from = tp,
+              names_glue = "{.value}_{tp}") %>%
   mutate(condition = factor(condition, levels = c("CT", "TS"))) %>%
   arrange(condition)
 
 write_csv(gi_stats_wider,
           file = "analysis/charrun_E13-E20_galactosylationindex_V01_20260114_VS.csv")
-  
+
 

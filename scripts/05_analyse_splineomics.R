@@ -3,7 +3,7 @@ library(SplineOmics)
 library(dplyr)
 library(here)
 
-load(file = "analysis/charrun_E13-E20_CQA_V05_20260728_VS.RData")
+load(file = "analysis/charrun_E13-E20_CQA_V06_20261006_VS.RData")
 
 #data.matrix <- clr_data.matrix
 
@@ -29,7 +29,7 @@ annotation <- data.frame(
   glycoform = rownames(data.matrix)
 ) %>%
   mutate(glycoform = gsub("/", " · ", glycoform)
-         )
+  )
 
 # creating report header ------------------------
 report_info <- list(

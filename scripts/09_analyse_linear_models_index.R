@@ -30,7 +30,7 @@ index_type <- "fucosylation"  # <-- CHANGE THIS LINE FOR DIFFERENT INDICES
 # Set file path and display names based on index_type
 # input_file_path <- here::here("analysis", paste0("charrun_E13-E20_", index_type, "index_V01_20260114_VS.RData"))
 input_file_path <- file.path(project_root, "analysis", 
-                             paste0("charrun_E13-E20_", index_type, "index_V02_20260602_VS.RData"))
+                             paste0("charrun_E13-E20_", index_type, "index_V03_20261006_VS.RData"))
 load(file = input_file_path)
 
 # Determine display name and value column
@@ -505,7 +505,7 @@ p_combined <- grid.arrange(p_main, p_diff, ncol = 1)
 
 # Save combined main and difference plot
 # ggsave(file.path(output_fig_dir, paste0(index_type, "_fitted_trajectories.png")), 
-       # p_combined, width = 8, height = 10, dpi = 300, bg = "white")
+# p_combined, width = 8, height = 10, dpi = 300, bg = "white")
 # ggsave(file.path(output_fig_dir, paste0(index_type, "_fitted_trajectories.pdf")), 
 #        p_combined, width = 8, height = 10)
 # 
@@ -720,3 +720,4 @@ p_diag_combined <- grid.arrange(p_resid, p_qq, ncol = 2)
 
 
 cat("\n========== ANALYSIS COMPLETE ==========\n")
+

@@ -21,7 +21,7 @@ br_averaged_corr_abundance_data <- corr_abundance_data %>%
   summarise(
     mean_frac_ab = mean(corr_abundance),
     se_frac_ab = sd(corr_abundance)/sqrt(n()) 
-    ) %>%
+  ) %>%
   ungroup() %>%
   mutate(timepoint = as.numeric(as.character(timepoint)),
          glycoform1 = gsub("/", " · ", glycoform1)) %>%

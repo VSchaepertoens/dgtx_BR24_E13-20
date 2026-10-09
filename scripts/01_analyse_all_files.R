@@ -49,7 +49,7 @@ df <- tibble(mzml_full_path = dir_ls(path = "data/",regexp =  ".*\\.mzML"),) %>%
   filter(grepl(pngase, filename, ignore.case = TRUE)) %>%
   mutate(sample_name = str_extract(filename, "([^_]+_[^_]+_[^_]+_[^_]+_[^_]+_[^_]+)"))
 # df <- df[1:195,] # for pngase to remove reference nistmab
-  
+
 fs::dir_create(df$analysis_path)
 
 # load cs and rt data -----------------------------------------------------
@@ -120,7 +120,7 @@ calculate_abundance <- function(mzml_full_path,
   ms_data <- mzR::openMSfile(mzml_full_path)
   print(ms_data)
   print(c(rt_start_sec,rt_end_sec))
-
+  
   pfm_ions <-
     assemble_proteoforms(proteins, modcoms) %>%
     ionize(charge_states = c(42:53), ppm = 500)
@@ -168,11 +168,11 @@ calculate_abundance <- function(mzml_full_path,
     summarise(abundance = sum(abundance)) %>%
     mutate(frac_ab = abundance / sum(abundance) * 100,
            file_name = mzml_full_path)
-
+  
   write_csv(x = abundances,
             file = paste(analysis_path,"frac_ab_tb_cs50.csv",sep = "/")
   )
-
+  
   print('Analysis finished')
 }
 

@@ -70,7 +70,7 @@ ggplot(indices_df,aes(x = tp, group = condition)) +
     fill = guide_legend(order = 1),
     linetype = guide_legend(order = 2)
   ) + 
- theme(legend.position = "none")
+  theme(legend.position = "none")
 
 ggsave(here("figures/figure1_indices_e17_288_312rem.png"), width = 3, height = 3, dpi = 600, bg = "white")
 ggsave(here("figures/figure1_indices_e17_288_312rem.pdf"), width = 3, height = 3, dpi = 600, bg = "white")

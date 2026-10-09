@@ -11,7 +11,8 @@ library(ggnewscale)
 load("analysis/abundance_data_pngase.RData")
 
 glycation_data <- abundance_data_averaged %>%
-  filter(timepoint != "72")
+  filter(timepoint != "72") %>%
+  filter(!experiment_tp %in% c("E17_288", "E17_312"))
 
 # Check if frac_abundance sums to 1 for each replicate
 abundance_sums <- glycation_data %>%
@@ -41,7 +42,7 @@ glycation_data <- glycation_data %>%
     total_glu = glu * frac_abundance,
     # total_sites = denominator_glu * frac_abundance
   ) 
-  # separate(experiment_tp, sep = "_", into = c("experiment","tp"), remove = FALSE) 
+# separate(experiment_tp, sep = "_", into = c("experiment","tp"), remove = FALSE) 
 
 # sanity_check <- glycation_data %>%
 #   group_by(experiment_tp) %>%
@@ -73,16 +74,16 @@ gi_summary <- glycation_data %>%
   ),
   tp = as.numeric(tp),
   experiment = factor(experiment, levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")))
-  # mutate(time_group = if_else(tp == 120, "120", "240_264")) %>%
-  # mutate(condition = case_when(
-  #   condition == "A" ~ "STD",
-  #   condition == "B" ~ "STD+",
-  #   condition == "G" ~ "LoG",
-  #   condition == "C" ~ "LoG+",
-  #   condition == "D" ~ "HiF",
-  #   condition == "E" ~ "HIP",
-  #   condition == "F" ~ "HIP+")
-  # ) 
+# mutate(time_group = if_else(tp == 120, "120", "240_264")) %>%
+# mutate(condition = case_when(
+#   condition == "A" ~ "STD",
+#   condition == "B" ~ "STD+",
+#   condition == "G" ~ "LoG",
+#   condition == "C" ~ "LoG+",
+#   condition == "D" ~ "HiF",
+#   condition == "E" ~ "HIP",
+#   condition == "F" ~ "HIP+")
+# ) 
 
 # Print the summary table
 print(gi_summary)
@@ -97,9 +98,9 @@ gi_stats <- gi_summary %>%
     se_GI = sd(GI, na.rm = TRUE)/sqrt(n()), 
     .groups = "drop"
   ) 
-  # mutate(time_group = if_else(tp == 120, "exponential", "stationary"),
-  #        condition = factor(condition, levels = c("STD", "STD+", "LoG", "LoG+", "HiF", "HIP", "HIP+")))
-save(gi_summary, gi_stats, file = "analysis/charrun_E13-E20_glycationindex_V02_20260602_VS.RData")
+# mutate(time_group = if_else(tp == 120, "exponential", "stationary"),
+#        condition = factor(condition, levels = c("STD", "STD+", "LoG", "LoG+", "HiF", "HIP", "HIP+")))
+save(gi_summary, gi_stats, file = "analysis/charrun_E13-E20_glycationindex_V03_20261006_VS.RData")
 load("analysis/charrun_E13-E20_glycationindex_V01_20260114_VS.RData")
 
 # make wider table --------------------------------------------------------

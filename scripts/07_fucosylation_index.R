@@ -9,7 +9,7 @@ source("scripts/plotting_utils.R", local = FALSE)
 
 # load abundance data -----------------------------------------------------
 
-load("analysis/charrun_E13-E20_CQA_V02_20251124_VS.RData")
+load("analysis/charrun_E13-E20_CQA_V06_20261006_VS.RData")
 
 # calculate GI ---------------------------------------------------------
 
@@ -84,7 +84,7 @@ color_mapping_experiment <- c(
 )
 
 
-save(gi_summary, gi_stats, file = "analysis/charrun_E13-E20_fucosylationindex_V02_20260602_VS.RData")
+save(gi_summary, gi_stats, file = "analysis/charrun_E13-E20_fucosylationindex_V03_20261006_VS.RData")
 load("analysis/charrun_E13-E20_fucosylationindex_V01_20260114_VS.RData")
 
 # plot as dotplots over time --------------------------------------------------------

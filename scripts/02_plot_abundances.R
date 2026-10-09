@@ -10,7 +10,12 @@ pngase <- "none" # "none" or "pngase"
 
 samples_table <- read_csv(paste0("analysis/overview_",pngase,"_merged.csv")) %>%
   filter(filename.x != "20251002_TB_cnistcho_E13_312_none_1_336.mzML") %>% #possibly an outlier
-    {.}
+  filter(filename.x != "20251113_TB_cnistcho_E20_288_none_3_1368.mzML") %>% #possibly an outlier
+  # filter(filename.x != "20251113_TB_cnistcho_E20_288_none_2_1367.mzML") %>% #possibly an outlier
+  
+  # filter(sample_name != "20251002_TB_Nistmab_150mg_l_pngase") %>% # nistmab control
+  
+  {.}
 
 # load abundances using a for loop  ---------------------------------------
 
@@ -20,7 +25,7 @@ for (i in 1:nrow(samples_table)) {
   
   abundance_data <- rbind(abundance_data,
                           read_csv(file_path)
-                          )
+  )
 }
 
 abundance_data <- abundance_data %>%
@@ -34,11 +39,11 @@ abundance_data <- abundance_data %>%
                     "pngase",
                     "technical_replicate",
                     "acquisition_number"
-                    ),
+           ),
            sep = "_",
            remove = FALSE) %>%
   mutate(experiment_tp = paste(experiment,timepoint, sep = "_"))
-  
+
 
 # calculate mean and sd and plot ------------------------------------------
 if (pngase == "none") {
@@ -65,18 +70,18 @@ abundance_data_averaged <- abundance_data %>%
   separate(experiment_tp,
            into = c("experiment",
                     "timepoint"
-                    ),
+           ),
            sep = "_",
            remove = FALSE) %>%
   mutate(experiment = factor(experiment, 
-                           levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")
-                           # levels = c("E15", "E17", "E19", "E16", "E18", "E20")
-                           ),
-         timepoint = factor(timepoint, 
-                             # levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")
-                             levels = c("72", "96", "120", "144", "168", "192","216",
-                                        "240", "264", "288", "312", "336", "360"))
-         ) %>%
+                             levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")
+                             # levels = c("E15", "E17", "E19", "E16", "E18", "E20")
+  ),
+  timepoint = factor(timepoint, 
+                     # levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")
+                     levels = c("72", "96", "120", "144", "168", "192","216",
+                                "240", "264", "288", "312", "336", "360"))
+  ) %>%
   {.}
 
 save(abundance_data,
@@ -100,26 +105,26 @@ color_mapping_experiment <- c(
 
 plot_bars <- function(data,
                       row_number = 1){
-ggplot(data, aes(x = modcom_name, y = frac_abundance, fill = experiment)) +
-  geom_col(
-    position = position_dodge(width = 0.9)  
-  ) + 
-  geom_errorbar(
-    aes(
-      ymin = frac_abundance - error,
-      ymax = frac_abundance + error,
-      group = experiment
-    ),
-    position = position_dodge(.9),
-    width = .5,
-    linewidth = .25
-  ) +
+  ggplot(data, aes(x = modcom_name, y = frac_abundance, fill = experiment)) +
+    geom_col(
+      position = position_dodge(width = 0.9)  
+    ) + 
+    geom_errorbar(
+      aes(
+        ymin = frac_abundance - error,
+        ymax = frac_abundance + error,
+        group = experiment
+      ),
+      position = position_dodge(.9),
+      width = .5,
+      linewidth = .25
+    ) +
     guides(fill = guide_legend(nrow = row_number)) +
     facet_wrap(~ timepoint, nrow = row_number) +
     scale_fill_manual(values = color_mapping_experiment) +
     scale_y_continuous(name = "fractional abundance (%)",
                        # limits = c(0,65)
-                       ) +
+    ) +
     xlab("") +
     theme_bw() +
     theme(text = element_text(size = 10, 
@@ -201,10 +206,10 @@ e18e20_data <- abundance_data_averaged %>%
 plot_bars(e18e20_data)
 
 ggsave(filename = "figures/frac_ab_barplot_e18_e20.png",
-         height = 100,
-         width = 200,
-         units = "mm",
-         dpi = 600)
+       height = 100,
+       width = 200,
+       units = "mm",
+       dpi = 600)
 
 e15e16_data <- abundance_data_averaged %>%
   filter(experiment %in% c("E15", "E16"))

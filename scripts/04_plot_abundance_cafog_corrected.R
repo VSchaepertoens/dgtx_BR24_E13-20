@@ -9,7 +9,7 @@ library(compositions)
 library(ggpattern)
 
 # # load cafog corrected data (only needs to be done once) -----------------------------------------------
-# 
+
 # abundance_data <- NULL
 # # Specify the directory path
 # directory_path <- "analysis/cafog/"
@@ -19,7 +19,7 @@ library(ggpattern)
 # 
 # for (folder in folders) {
 #   file_path <- paste0(folder,"/results.csv")
-#   
+# 
 #   abundance_data <- rbind(abundance_data,
 #                           read_csv(file_path,
 #                                    n_max = 10) %>%
@@ -27,6 +27,10 @@ library(ggpattern)
 #                             {.}
 #   )
 # }
+# 
+# abundance_data %>%
+#   distinct(experiment_tp) %>%
+#   arrange(experiment_tp)
 # 
 # corr_abundance_data <- abundance_data %>%
 #   separate(
@@ -37,10 +41,10 @@ library(ggpattern)
 #   ) %>%
 #   select(glycoform1, corr_abundance, corr_abundance_error, experiment_tp) %>%
 #   mutate(glycoform1 = str_replace_all(glycoform1, "A2", ""))  %>%
-#   mutate(glycoform1 = str_replace_all(glycoform1, c("G0F/G2F" = "G1F/G1F", 
+#   mutate(glycoform1 = str_replace_all(glycoform1, c("G0F/G2F" = "G1F/G1F",
 #                                                     "G2F/none" = "none/G2F",
-#                                                     "G1F/none" = "none/G1F", 
-#                                                     "G0F/none" = "none/G0F", 
+#                                                     "G1F/none" = "none/G1F",
+#                                                     "G0F/none" = "none/G0F",
 #                                                     "G0/none" = "none/G0")
 #                                       )) %>%
 #   mutate(glycoform1 = factor(glycoform1, levels = c("none/G0F",
@@ -62,40 +66,68 @@ library(ggpattern)
 #            remove = FALSE) %>%
 #   mutate(experiment = factor(experiment, levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20"))
 #          # # this is a bad idea! do not factor the continuous axis!
-#          # timepoint = factor(timepoint, 
+#          # timepoint = factor(timepoint,
 #          #                    # levels = c("E13", "E15", "E17", "E19", "E14", "E16", "E18", "E20")
 #          #                    levels = c("72", "96", "120", "144", "168", "192","216",
 #          #                               "240", "264", "288", "312", "336", "360"))
 #          ) %>%
 # 
 #   {.}
-
-# save(corr_abundance_data, file = "analysis/corr_abundance_data.RData")
-load("analysis/corr_abundance_data.RData")
+# 
+# 
+# corr_abundance_data %>%
+#   distinct(experiment_tp) %>%
+#   arrange(experiment_tp)
 
 
 # check missing annotations (only needs to be done once)-----------------------------------------------
-
 # #check missing glycan annotations
 # corr_abundance_data %>%
 #   filter(experiment_tp %in% "E13_336")
 # 
-# # corr_abundance_data_fixed <- corr_abundance_data
+# corr_abundance_data_fixed <- corr_abundance_data
 # corr_abundance_data_fixed <- corr_abundance_data_fixed %>%
 #   mutate(
 #     glycoform1 = if_else(
-#       experiment_tp == "E13_336" & is.na(glycoform1),
+#       experiment_tp == "E18_336" & is.na(glycoform1),
 #       # experiment_tp == "E19_216" & glycoform1 == "G1/G2F",
-#       "none/G1F",   # <-- replace this with the correct annotation
+#       "none/G2F",   # <-- replace this with the correct annotation
 #       glycoform1
 #     )
 #   )
 # 
 # corr_abundance_data_fixed %>%
-#   filter(experiment_tp %in% "E13_336")
+#   filter(experiment_tp %in% "E18_336")
 # 
 # corr_abundance_data <- corr_abundance_data_fixed
 # 
+# 
+# ##Further fixing 
+# corr_abundance_data <- corr_abundance_data %>%
+#   mutate(
+#     glycoform1 = if_else(
+#       experiment_tp == "E16_72" &
+#         glycoform1 == "none/G2F" &
+#         corr_abundance == 0,
+#       "G1F/G2F",
+#       as.character(glycoform1)
+#     ))
+#     
+# corr_abundance_data <- corr_abundance_data %>%
+#   mutate(
+#     glycoform1 = if_else(
+#       experiment_tp == "E13_336" &
+#         glycoform1 == "none/G2F" &
+#         abs(corr_abundance - 0.387) < 0.001,
+#       "none/G1F",
+#       as.character(glycoform1)
+#     ))
+# 
+# 
+# save(corr_abundance_data, file = "analysis/corr_abundance_data.RData")
+
+load("analysis/corr_abundance_data.RData")
+
 #ensures correct order of glycoforms
 corr_abundance_data <- corr_abundance_data %>%
   mutate(glycoform1 = factor(glycoform1, levels = c("none/G0F",
@@ -120,7 +152,7 @@ corr_abundance_data <- corr_abundance_data %>%
 corr_abundance_data %>%
   dplyr::summarise(n = dplyr::n(), .by = c(glycoform1, experiment_tp)) %>%
   dplyr::filter(n > 1)
-  
+
 data.matrix <- corr_abundance_data %>%
   select(glycoform1, corr_abundance, experiment_tp) %>%
   pivot_wider(values_from = corr_abundance,
@@ -184,11 +216,11 @@ clr_data.matrix <- t(as.matrix(clr_data.matrix))
 
 clr_data.matrix
 
-save(corr_abundance_data, clr_data.matrix,data.matrix, file = "analysis/charrun_E13-E20_CQA_V05_20260728_VS.RData")
+save(corr_abundance_data, clr_data.matrix,data.matrix, file = "analysis/charrun_E13-E20_CQA_V06_20261006_VS.RData")
 
 
 # plot char runs data -----------------------------------------------------
-load("analysis/charrun_E13-E20_CQA_V05_20260728_VS.RData")
+load("analysis/charrun_E13-E20_CQA_V06_20261006_VS.RData")
 
 color_mapping_experiment <- c(
   "E13" = "#FD8D3C",
@@ -236,11 +268,11 @@ plot_bars <- function(data,
           legend.position = "bottom",
           legend.text = element_text(size = 10),
           panel.border = element_blank()
-          ) +
+    ) +
     ggtitle(title) +
     NULL
-  }
-  
+}
+
 ## plot all experiments
 plot_bars(corr_abundance_data,
           title = "Fractional abundance of glycans in all experiments",
@@ -324,47 +356,47 @@ corr_abundance_data$timepoint <- as.numeric(as.character(corr_abundance_data$tim
 
 plot_over_time <- function(data,
                            which_experiment = c("E14")) {
-ggplot(data %>% filter(experiment %in% which_experiment), 
-       aes(x = timepoint, y = corr_abundance, color = experiment)) +
-  geom_point() +
-  geom_smooth(method = loess, se = FALSE) + # Remove fullrange = TRUE
-  scale_color_manual(values = color_mapping_experiment) +
-  facet_wrap(~glycoform1, 
-             scales = "free_y",
-             nrow = 2)
+  ggplot(data %>% filter(experiment %in% which_experiment), 
+         aes(x = timepoint, y = corr_abundance, color = experiment)) +
+    geom_point() +
+    geom_smooth(method = loess, se = FALSE) + # Remove fullrange = TRUE
+    scale_color_manual(values = color_mapping_experiment) +
+    facet_wrap(~glycoform1, 
+               scales = "free_y",
+               nrow = 2)
   
   ggsave(filename = paste0("figures/corrected_frac_ab_lineplot_over_time",which_experiment,".png"),
          height = 100,
          width = 250,
          units = "mm",
          dpi = 600)
-
-ggplot(data %>% filter(experiment %in% which_experiment), 
-       aes(x = timepoint, y = corr_abundance, fill = experiment)) +
-  geom_col(
-    position = position_dodge(width = 0.9)  
-  ) + 
-  geom_errorbar(
-    aes(
-      ymin = corr_abundance - corr_abundance_error,
-      ymax = corr_abundance + corr_abundance_error,
-      group = experiment
-    ),
-    position = position_dodge(.9),
-    width = .5,
-    linewidth = .25
-  ) +
-  scale_fill_manual(values = color_mapping_experiment, 
-                    breaks = names(color_mapping_experiment)) +
-  facet_wrap(~glycoform1, 
-             scales = "free_y",
-             nrow = 2)
-
-ggsave(filename =  paste0("figures/corrected_frac_ab_barplot_over_time",which_experiment,".png"),
-       height = 100,
-       width = 250,
-       units = "mm",
-       dpi = 600)
+  
+  ggplot(data %>% filter(experiment %in% which_experiment), 
+         aes(x = timepoint, y = corr_abundance, fill = experiment)) +
+    geom_col(
+      position = position_dodge(width = 0.9)  
+    ) + 
+    geom_errorbar(
+      aes(
+        ymin = corr_abundance - corr_abundance_error,
+        ymax = corr_abundance + corr_abundance_error,
+        group = experiment
+      ),
+      position = position_dodge(.9),
+      width = .5,
+      linewidth = .25
+    ) +
+    scale_fill_manual(values = color_mapping_experiment, 
+                      breaks = names(color_mapping_experiment)) +
+    facet_wrap(~glycoform1, 
+               scales = "free_y",
+               nrow = 2)
+  
+  ggsave(filename =  paste0("figures/corrected_frac_ab_barplot_over_time",which_experiment,".png"),
+         height = 100,
+         width = 250,
+         units = "mm",
+         dpi = 600)
 }
 
 plot_over_time(corr_abundance_data, which_experiment = c("E20"))
@@ -400,8 +432,8 @@ color_mapping_condition <- c(
 )
 # Line plot, facet per subunit
 ggplot(corrected_abundance_data, aes(x = timepoint, 
-                     y = corr_abundance, 
-                     color = condition)) +
+                                     y = corr_abundance, 
+                                     color = condition)) +
   geom_point(aes(shape = experiment),
              size = 1,
              alpha = 0.5) +
@@ -533,11 +565,11 @@ subset <- corr_abundance_data %>%
     experiment %in% c("E13", "E15", "E17", "E19") ~ "Constant",
     experiment %in% c("E14", "E16", "E18", "E20") ~ "Temp. shifted",
     TRUE ~ NA_character_  # optional, for any experiments not matched
-    )
+  )
   ) %>%
   mutate(condition_tp = paste(condition, timepoint, sep = "_")) %>%
   filter(experiment %in% c("E13", "E14", "E15", "E18", "E19", "E20"))
-  {}
+{}
 
 correct_order_coord_flip <- c("G2F/G2F",
                               "G1F/G2F",
@@ -552,8 +584,8 @@ correct_order_coord_flip <- c("G2F/G2F",
 )
 
 color_mapping_condition <- c(
-"Constant" = "#E6641E",
-"Temp. shifted" = "#4B288C"
+  "Constant" = "#E6641E",
+  "Temp. shifted" = "#4B288C"
 )
 
 color_mapping_condition_tp <- c(
@@ -591,7 +623,7 @@ ggplot(subset_stats) +
       group = condition_tp,              
       pattern = timepoint,
       pattern_density = timepoint
-      ),
+    ),
     color = "black",
     position = dodge,
     linewidth = 0.025,
@@ -644,22 +676,22 @@ ggplot(subset_stats) +
         # panel.border = element_blank(),
         panel.grid.major.y = element_blank(),
         panel.grid.minor = element_blank()
-        ) +
+  ) +
   guides(
     fill = guide_legend(title = "Condition",
                         override.aes = list(pattern = "none")),  
     pattern = guide_legend(title = "Timepoint",
-                          override.aes = list(fill = "white", color = "black"))  
-)
-  
-  
-ggsave("figures/corrected_frac_ab_tp_120_336_vertical_mean_sd_minusE17E16.png",
-  width = 170,
-  height = 150,
-  units = "mm",
-  dpi = 600,
-  bg = "transparent"
+                           override.aes = list(fill = "white", color = "black"))  
   )
+
+
+ggsave("figures/corrected_frac_ab_tp_120_336_vertical_mean_sd_minusE17E16.png",
+       width = 170,
+       height = 150,
+       units = "mm",
+       dpi = 600,
+       bg = "transparent"
+)
 
 
 # no coord flip -----------------------------------------------------------
