@@ -7,7 +7,7 @@ source(here::here("scripts", "plotting_utils.R"))
 # 
 # load(file = input_file_path)
 
-input_file_path <- here::here("analysis", "charrun_E13-E20_subunit_V03_20260811_VS.RData")
+input_file_path <- here::here("analysis", "charrun_E13-E20_subunit_V04_20261008_VS.RData")
 
 load(file = input_file_path)
 
@@ -49,15 +49,15 @@ ggplot(clr_data_summarized, aes(timepoint, clr_fractional_abundance, color = con
   scale_shape_manual(values = 1:length(clr_data_summarized$experiment))
 
 
-  
-  # subset data for a single feature
-  filt_data <- clr_data_summarized %>% filter(subunit == "LC2") 
-  
-  filt_data$condition <- factor(filt_data$condition)
-  levels(filt_data$condition)
-  filt_data$condition <- relevel(filt_data$condition, ref = "CT")
-  levels(filt_data$condition)
-  
+
+# subset data for a single feature
+filt_data <- clr_data_summarized %>% filter(subunit == "LC2") 
+
+filt_data$condition <- factor(filt_data$condition)
+levels(filt_data$condition)
+filt_data$condition <- relevel(filt_data$condition, ref = "CT")
+levels(filt_data$condition)
+
 # formal test for linearity
 fit_lin <- lm(clr_fractional_abundance ~ timepoint * condition, data = filt_data) # fit linear model
 summary(fit_lin)
@@ -140,36 +140,36 @@ for (s in subunits) {
   
   pred_df <- expand.grid(
     timepoint = seq(min(filt_data$timepoint),
-              max(filt_data$timepoint),
-              length.out = 200),
+                    max(filt_data$timepoint),
+                    length.out = 200),
     condition = levels(filt_data$condition)
   )
-
-# get fitted values
+  
+  # get fitted values
   pred_df$spline_fit <- predict(fit_spline, newdata = pred_df)
-
+  
   filt_data$experiment <- factor(filt_data$experiment)
-
-ggplot(filt_data, aes(timepoint, clr_fractional_abundance, color = condition)) +
-  geom_vline(aes(xintercept = 146, linetype = "Temp. shift"),
-             color = "#58A787", linewidth = 1) +
-  geom_point(data = filt_data,
-             aes(shape = experiment),
-             alpha = 0.5) +
-  geom_line(data = pred_df, aes(timepoint, spline_fit), linewidth = 1) +
-  scale_color_manual(
-    values = color_mapping_condition,
-    breaks = names(color_mapping_condition),
-    name = "Fitted splines per condition"
-  ) +
-  scale_shape_manual(values = 1:nlevels(filt_data$experiment),
-                     name = "Experiment") +
-  labs(
-    x = "Time [h]",
-    y = "CLR fractional abundance - LC2",
-    linetype = "Temp. shift"
-  )
-
+  
+  ggplot(filt_data, aes(timepoint, clr_fractional_abundance, color = condition)) +
+    geom_vline(aes(xintercept = 146, linetype = "Temp. shift"),
+               color = "#58A787", linewidth = 1) +
+    geom_point(data = filt_data,
+               aes(shape = experiment),
+               alpha = 0.5) +
+    geom_line(data = pred_df, aes(timepoint, spline_fit), linewidth = 1) +
+    scale_color_manual(
+      values = color_mapping_condition,
+      breaks = names(color_mapping_condition),
+      name = "Fitted splines per condition"
+    ) +
+    scale_shape_manual(values = 1:nlevels(filt_data$experiment),
+                       name = "Experiment") +
+    labs(
+      x = "Time [h]",
+      y = "CLR fractional abundance - LC2",
+      linetype = "Temp. shift"
+    )
+  
 }
 
 

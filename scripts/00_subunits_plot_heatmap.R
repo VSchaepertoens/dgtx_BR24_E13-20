@@ -10,7 +10,7 @@ library(here)
 
 # load data 20251002 & preprocess -----------------------------------------
 
-data <- read_csv('data/uv_subunits_TB.csv')
+data <- read_csv('data/uv_subunits_TB_allTP.csv')
 
 data_summarized <- data %>%
   group_by(experiment, timepoint) %>%
@@ -34,13 +34,13 @@ data_summarized <- data %>%
   )) %>%
   filter(timepoint != 72) %>%
   mutate(experiment_tp = paste(experiment, timepoint, sep = "_")) 
-  
+
 
 # Line plot
 ggplot(data_summarized, aes(x = timepoint, 
-                     y = peak_area, 
-                     color = subunit, 
-                     group = subunit)) +
+                            y = peak_area, 
+                            color = subunit, 
+                            group = subunit)) +
   geom_line(size = 1.2) +
   geom_point(size = 2) +
   facet_wrap(~experiment, nrow = 2) +
@@ -63,8 +63,8 @@ ggplot(data_summarized, aes(x = timepoint,
 
 # Line plot, facet per subunit
 ggplot(data_summarized, aes(x = timepoint, 
-                     y = peak_area, 
-                     color = condition)) +
+                            y = peak_area, 
+                            color = condition)) +
   geom_vline(aes(xintercept = 146, linetype = "Temp. shift to 32 °C"),
              color = "#58A787", 
              linewidth = 1.5) +
@@ -73,10 +73,10 @@ ggplot(data_summarized, aes(x = timepoint,
              alpha = 0.5) +
   geom_line(aes(group = experiment), alpha = 0.3) + #“Trend lines show locally weighted regression fits (LOESS) with no confidence interval (se = FALSE).”
   geom_smooth(size = 1.2, se = FALSE, alpha = 0.9) +
-
+  
   scale_color_manual(values = color_mapping_condition) +
   scale_shape_manual(values = 1:nlevels(data_summarized$experiment)) +
-
+  
   facet_wrap(~subunit, ncol = 1, scales = "free_y") +
   theme_bw(base_size = 12) +
   theme(
@@ -97,7 +97,7 @@ ggplot(data_summarized, aes(x = timepoint,
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     panel.border = element_blank(),
-        ) +
+  ) +
   labs(x = "Time [h]", y = "Relative peak area [%]",
        title = "Subunit composition over time",
        shape = "Experiment",
@@ -182,7 +182,7 @@ data_summarized %>%
   ungroup() %>%
   dplyr::summarise(n = dplyr::n(), .by = c(subunit, experiment_tp)) %>%
   dplyr::filter(n > 1)
- 
+
 data.matrix <- data_summarized %>%
   ungroup() %>%
   mutate(experiment_tp = paste(experiment, timepoint, sep = "_")) %>%
@@ -249,4 +249,4 @@ clr_data.matrix <- t(as.matrix(clr_data.matrix))
 
 clr_data.matrix
 
-save(data.matrix,clr_data.matrix, meta, file = "analysis/charrun_E13-E20_subunit_V03_20260811_VS.RData")
+save(data.matrix,clr_data.matrix, meta, file = "analysis/charrun_E13-E20_subunit_V04_20261008_VS.RData")
