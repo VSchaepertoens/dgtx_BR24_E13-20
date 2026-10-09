@@ -23,6 +23,7 @@
 library(fs)
 library(fragquaxi)
 library(tidyverse)
+library(fs)
 
 # define analysis of pngase F digested or not digested data ---------------
 
@@ -180,7 +181,7 @@ calculate_abundance <- function(mzml_full_path,
 # pwalk(data_merged[1:75,], calculate_abundance, .progress = TRUE)
 
 start.time <- Sys.time()
-pwalk(data_merged, calculate_abundance, .progress = TRUE)
+pwalk(data_merged[1:3,], calculate_abundance, .progress = TRUE)
 
 end.time <- Sys.time()
 

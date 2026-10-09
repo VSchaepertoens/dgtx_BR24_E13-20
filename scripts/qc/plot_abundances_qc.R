@@ -63,25 +63,26 @@ load(file = paste0("analysis/abundance_data_",pngase,"_qc.RData"))
 # subset most abundant glycans --------------------------------------------
 
 abundance_data_subset <- abundance_data %>%
-  filter(modcom_name %in% c("A2G0F/A2G0F","A2G1F/A2G0F", "A2G1F/A2G1F")) %>%
+  filter(modcom_name %in% c("A2G0F/A2G0F", "A2G1F/A2G0F", "A2G1F/A2G1F")) %>%
   mutate(
-        acquisition_number = factor(acquisition_number, 
-                                    levels = c(
-                                      165, 193, 218, 250, 278, 316, 344, 376, 438, 506, 538,
-                                      785, 794, 827, 851, 901, 929, 961, 986, 994, 1007,
-                                      1040, 1091, 1117, 1161, 1185, 1255, 1287, 1320, 1350,
-                                      1374, 1418, 1535, 1556, 1580, 1608, 1623, 1644, 1665,
-                                      1713, 1736, 1756, 1775, 1789, 1813, 1858, 1882, 1918,
-                                      1932, 1952, 1961, 1985, 2009
-                                    )
-                                    ),
-         modcom_name = gsub("/", " · ", modcom_name),
-         modcom_name = gsub("A2", "", modcom_name)
-         # measurement = case_when(
-         #   acquisition_number %in% c("11","41","77","14","99","105") ~ "before_tunefile_change",
-         #   TRUE ~ "after_tunefile_change")
-) %>%
+    acquisition_number = factor(
+      acquisition_number,
+      levels = c(
+        "03", "04", "05", "165", "193", "218", "250", "278",
+        "316", "344", "376", "438", "506", "538", "785", "794",
+        "827", "851", "901", "929", "961", "986", "994", "1007",
+        "1040", "1091", "1117", "1161", "1185", "1255", "1287",
+        "1320", "1350", "1374", "1418", "1535", "1556", "1580",
+        "1608", "1623", "1644", "1665", "1713", "1736", "1756",
+        "1775", "1789", "1813", "1858", "1882", "1918", "1932",
+        "1952", "1961", "1985", "2009"
+      )
+    ),
+    modcom_name = gsub("/", " · ", modcom_name),
+    modcom_name = gsub("A2", "", modcom_name)
+  ) %>%
   mutate(measurement_phase = case_when(
+    acquisition_number %in% c("03", "04", "05") ~ "E13/E14 old",
     acquisition_number %in% c("165", "193", "218", "250", "278", "316", "344", "376", "438") ~ "E13/E14 old",
     acquisition_number %in% c("506", "538", "785", "794","827", "851", "901", "929", "961", "986", "994") ~ "E15/E16",
     acquisition_number %in% c("1007",
@@ -142,7 +143,7 @@ qc_stats <- abundance_data_subset %>%
 
 qc_stats
 
-readr::write_excel_csv(qc_stats, "analysis/qc_stats.csv")
+# readr::write_excel_csv(qc_stats, "analysis/qc_stats.csv")
 
 
 write.csv(
@@ -205,3 +206,41 @@ readr::write_excel_csv(qc_stats_2, "analysis/qc_stats_measurement_phase.csv")
          units = "mm",
          dpi = 600)
 
+  ggplot(abundance_data_subset,aes(x = acquisition_number, y = frac_ab)) +
+    geom_col(
+      position = position_dodge(width = 0.9),
+    ) +
+    xlab("acquisition number") +
+    ylim(0, 40) +
+    ylab("fractional abundance (%)") +
+    geom_hline(yintercept = 0, linewidth = .35) +
+    coord_flip() +
+    facet_wrap(~modcom_name) +
+    theme_bw() +
+    guides(fill = guide_legend(ncol = 3)) +
+    theme(text = element_text(size = 6, 
+                              # face = "bold", 
+                              family = "sans"),
+          axis.line = element_line(),
+          axis.text.x = element_text(vjust = 0.5, hjust = 0.5),
+          axis.text.y = element_text(colour = "black", hjust = 0.5),
+          axis.text = element_text(colour = "black"),
+          axis.title.y = element_text(hjust = 0.5, face = "bold",margin = margin(r = 4)),
+          axis.title.x = element_text(hjust = 0.5, face = "bold"),
+          axis.ticks.y = element_blank(),
+          legend.position = "none",
+          legend.text = element_text(),
+          legend.key.height = unit(0.3, 'cm'),
+          legend.key.width = unit(0.3, 'cm'),
+          legend.box = "horizontal",
+          legend.title = element_text(face = "bold"),
+          panel.border = element_blank(),
+          panel.grid.major.y = element_blank(),
+          panel.grid.minor = element_blank(),
+    ) 
+  
+  ggsave(filename = paste0("figures/quality_control_measurement.pdf"),
+         height = 180,
+         width = 180,
+         units = "mm",
+         dpi = 600)
